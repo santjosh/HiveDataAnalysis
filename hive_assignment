@@ -1,0 +1,284 @@
+
+create database hive_db;
+2. Store raw data into hdfs location
+
+use hive_db;
+
+hadoop fs -put /config/workspace/sales_order_data.csv /tmp/hive/abc
+
+3. Create a internal hive table "sales_order_csv" which will store csv data sales_order_csv .. make sure to skip header row while creating table
+
+create table sales_order_csv(ORDERNUMBER int,QUANTITYORDERED int,PRICEEACH float,ORDERLINENUMBER int,SALES float,STATUS string,QTR_ID int,MONTH_ID int,YEAR_ID int,PRODUCTLINE string,MSRP int,PRODUCTCODE string,PHONE string,CITY string,STATE string,POSTALCODE string,COUNTRY string,TERRITORY string,CONTACTLASTNAME string,CONTACTFIRSTNAME string,DEALSIZE string)
+row format delimited
+fields terminated by ','
+tblproperties("skip.header.line.count"="1")
+;
+
+4. Load data from hdfs path into "sales_order_csv"
+
+load data inpath '/tmp/hive/abc/sales_order_data.csv' into table sales_order_csv;
+
+5. Create an internal hive table which will store data in ORC format "sales_order_orc"
+create table sales_order_orc(ORDERNUMBER int,QUANTITYORDERED int,PRICEEACH float,ORDERLINENUMBER int,SALES float,STATUS string,QTR_ID int,MONTH_ID int,YEAR_ID int,PRODUCTLINE string,MSRP int,PRODUCTCODE string,PHONE string,CITY string,STATE string,POSTALCODE string,COUNTRY string,TERRITORY string,CONTACTLASTNAME string,CONTACTFIRSTNAME string,DEALSIZE string)
+stored as orc; 
+
+6. Load data from "sales_order_csv" into "sales_order_orc"
+from sales_order_csv insert overwrite table sales_order_orc select *;
+
+Calculatye total sales per year
+
+hive> select year_id, sum(sales)
+    > from sales_order_orc
+    > group by year_id;
+Query ID = abc_20230216204557_3543cef3-1119-4eae-a757-f0aa055a4cd3
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676557047659_0004, Tracking URL = http://d3ed87b13ff0:8088/proxy/application_1676557047659_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676557047659_0004
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-16 20:46:06,425 Stage-1 map = 0%,  reduce = 0%
+2023-02-16 20:46:14,611 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.66 sec
+2023-02-16 20:46:19,732 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.96 sec
+MapReduce Total cumulative CPU time: 4 seconds 960 msec
+Ended Job = job_1676557047659_0004
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.96 sec   HDFS Read: 44114 HDFS Write: 193 SUCCESS
+Total MapReduce CPU Time Spent: 4 seconds 960 msec
+OK
+year_id _c1
+2003    3516979.547241211
+2004    4724162.593383789
+2005    1791486.7086791992
+
+Find a product for which maximum orders were placed
+
+hive> select productcode, sum(QUANTITYORDERED) as total
+    > from sales_order_orc
+    > group by productcode
+    > order by total desc
+    > limit 1;
+Query ID = abc_20230216221532_7dd4548c-06e6-4c14-9b7a-30ccd68b9bff
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676565408180_0002, Tracking URL = http://e86d92015f66:8088/proxy/application_1676565408180_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676565408180_0002
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-16 22:15:43,894 Stage-1 map = 0%,  reduce = 0%
+2023-02-16 22:15:51,146 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.38 sec
+2023-02-16 22:15:56,271 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.58 sec
+MapReduce Total cumulative CPU time: 4 seconds 580 msec
+Ended Job = job_1676565408180_0002
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+  
+  
+In which country sales was maximum and in which country sales was minimum
+  
+  select country, sum(sales) as ts
+    > from sales_order_orc
+    > group by country
+    > order by ts desc
+    > limit 1;
+	
+	country ts
+USA     3627982.825744629
+
+In which country sales was maximum and in which country sales was minimum
+hive> select country, sum(sales) as ts
+    > from sales_order_orc
+    > group by country
+    > order by ts
+    > limit 1;
+Query ID = abc_20230217112506_6ea96382-02cc-41e5-812f-69475ee267d7
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676612266475_0007, Tracking URL = http://f95036eb6f9f:8088/proxy/application_1676612266475_0007/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676612266475_0007
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-17 11:25:15,776 Stage-1 map = 0%,  reduce = 0%
+2023-02-17 11:25:23,967 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.52 sec
+2023-02-17 11:25:29,104 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 5.27 sec
+MapReduce Total cumulative CPU time: 5 seconds 270 msec
+Ended Job = job_1676612266475_0007
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676612266475_0008, Tracking URL = http://f95036eb6f9f:8088/proxy/application_1676612266475_0008/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676612266475_0008
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-17 11:25:44,350 Stage-2 map = 0%,  reduce = 0%
+2023-02-17 11:25:51,534 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.93 sec
+2023-02-17 11:25:56,657 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.21 sec
+MapReduce Total cumulative CPU time: 4 seconds 210 msec
+Ended Job = job_1676612266475_0008
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 5.27 sec   HDFS Read: 44292 HDFS Write: 716 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.21 sec   HDFS Read: 8346 HDFS Write: 125 SUCCESS
+Total MapReduce CPU Time Spent: 9 seconds 480 msec
+OK
+country ts
+Ireland 57756.43029785156
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676565408180_0003, Tracking URL = http://e86d92015f66:8088/proxy/application_1676565408180_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676565408180_0003
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-16 22:16:10,882 Stage-2 map = 0%,  reduce = 0%
+2023-02-16 22:16:18,063 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.99 sec
+2023-02-16 22:16:24,216 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.11 sec
+MapReduce Total cumulative CPU time: 4 seconds 110 msec
+Ended Job = job_1676565408180_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.58 sec   HDFS Read: 35993 HDFS Write: 3269 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.11 sec   HDFS Read: 10934 HDFS Write: 113 SUCCESS
+Total MapReduce CPU Time Spent: 8 seconds 690 msec
+OK
+S18_3232        1774
+Time taken: 52.474 seconds, Fetched: 1 row(s)
+
+ SELECT city
+       round(SUM (CASE
+        WHEN MONTH_ID >= 1 AND MONTH_ID<4 THEN SALES
+       ELSE 0
+     END),2) AS Q1,
+       SUM (CASE
+       WHEN MONTH_ID >= 4 AND MONTH_ID <7 THEN SALES
+         ELSE 0
+      END) AS Q2,
+       SUM (CASE
+        WHEN MONTH_ID >=7 AND MONTH_ID <10 THEN SALES
+         ELSE 0
+       END) AS Q3,
+       SUM (CASE
+        WHEN MONTH_ID >=10 AND MONTH_ID<13 THEN SALES
+        ELSE 0
+      END) AS Q4
+     FROM sales_order_orc;
+	 
+Calculate the total sales for each quarter
+	 
+hive> SELECT 
+    >   SUM (CASE
+    >     WHEN MONTH_ID >= 1 AND MONTH_ID<4 THEN SALES
+    >     ELSE 0
+    >   END) AS Q1,
+    >   SUM (CASE
+    >     WHEN MONTH_ID >= 4 AND MONTH_ID <7 THEN SALES
+    >     ELSE 0
+    >   END) AS Q2,
+    >   SUM (CASE
+    >     WHEN MONTH_ID >=7 AND MONTH_ID <10 THEN SALES
+    >     ELSE 0
+    >   END) AS Q3,
+    >   SUM (CASE
+    >     WHEN MONTH_ID >=10 AND MONTH_ID<13 THEN SALES
+    >     ELSE 0
+    >   END) AS Q4
+    > FROM sales_order_orc;
+Query ID = abc_20230216224947_cb029285-d3fd-4662-a3ec-7c4086ca876f
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676567635208_0003, Tracking URL = http://f6c3238b1ef9:8088/proxy/application_1676567635208_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676567635208_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-16 22:49:57,796 Stage-1 map = 0%,  reduce = 0%
+2023-02-16 22:50:05,055 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 11.01 sec
+2023-02-16 22:50:10,170 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 14.26 sec
+MapReduce Total cumulative CPU time: 14 seconds 260 msec
+Ended Job = job_1676567635208_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 14.26 sec   HDFS Read: 39578 HDFS Write: 116 SUCCESS
+Total MapReduce CPU Time Spent: 14 seconds 260 msec
+OK
+q1      q2      q3      q4
+665     561     503     1094
+Time taken: 24.611 seconds, Fetched: 1 row(s)
+
+ Calculate quartelry sales for each city
+ SELECT city,
+       round(SUM (CASE
+        WHEN MONTH_ID >= 1 AND MONTH_ID<4 THEN SALES
+       ELSE 0
+     END),2) AS Q1,
+       SUM (CASE
+       WHEN MONTH_ID >= 4 AND MONTH_ID <7 THEN SALES
+         ELSE 0
+      END) AS Q2,
+       SUM (CASE
+        WHEN MONTH_ID >=7 AND MONTH_ID <10 THEN SALES
+         ELSE 0
+       END) AS Q3,
+       SUM (CASE
+        WHEN MONTH_ID >=10 AND MONTH_ID<13 THEN SALES
+        ELSE 0
+      END) AS Q4
+     FROM sales_order_orc
+	 group by city;
+	 
+	 
+	 
+	 
+	 Find a month for each year in which maximum number of quantities were sold
+	 select sub.month, sub.year,sub.quantity
+	 from ( select month_id as month,year_id as year, QUANTITYORDERED as quantity, ROW_NUMBER() over (partition by year_id order by QUANTITYORDERED desc) as row_num from sales_order_orc) as sub
+	 where sub.row_num=1;
+	 
+	  In which quarter sales was minimum
+	  
+	 select least(q1,q2,q3,q4)
+	 from
+	 (SELECT 
+       round(SUM (CASE
+        WHEN MONTH_ID >= 1 AND MONTH_ID<4 THEN SALES
+       ELSE 0
+     END),2) AS Q1,
+       SUM (CASE
+       WHEN MONTH_ID >= 4 AND MONTH_ID <7 THEN SALES
+         ELSE 0
+      END) AS Q2,
+       SUM (CASE
+        WHEN MONTH_ID >=7 AND MONTH_ID <10 THEN SALES
+         ELSE 0
+       END) AS Q3,
+       SUM (CASE
+        WHEN MONTH_ID >=10 AND MONTH_ID<13 THEN SALES
+        ELSE 0
+      END) AS Q4
+     FROM sales_order_orc) as sub
