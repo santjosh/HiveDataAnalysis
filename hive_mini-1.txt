@@ -1,0 +1,351 @@
+create database hive_db;
+2. Store raw data into hdfs location
+
+use hive_db;
+
+hadoop fs -put /config/workspace/AgentLogingReport.csv /tmp/hive/abc
+hadoop fs -put /config/workspace/AgentPerformance.csv /tmp/hive/abc
+create table agent_log_csv(sl_num int,Agent String,login_date String,login_time String,logout_time String,duration String)
+row format delimited
+fields terminated by ','
+tblproperties("skip.header.line.count"="1");
+
+create table agent_perf_csv(sl_num int,login_date String ,Agent String,total_chats int,avg_resp String,avg_resolution String,avg_rating float,total_feedback int)
+row format delimited
+fields terminated by ','
+tblproperties("skip.header.line.count"="1")
+;
+
+set hive.cli.print.header = true;
+
+load data inpath '/tmp/hive/abc/AgentPerformance.csv' into table agent_perf_csv;
+load data inpath '/tmp/hive/abc/AgentLogingReport.csv' into table agent_log_csv;
+/config/workspace/AgentLogingReport.csv
+
+/config/workspace/AgentPerformance.csv
+
+hive> select distinct(agent) from agent_perf_csv;
+Query ID = abc_20230219214412_8514df10-6318-4e48-a03c-f3a81c16fee1
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>se
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676822612657_0002, Tracking URL = http://a6f03762a109:8088/proxy/application_1676822612657_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676822612657_0002
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-19 21:44:22,838 Stage-1 map = 0%,  reduce = 0%
+2023-02-19 21:44:30,102 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.43 sec
+2023-02-19 21:44:35,229 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.66 sec
+MapReduce Total cumulative CPU time: 4 seconds 660 msec
+Ended Job = job_1676822612657_0002
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.66 sec   HDFS Read: 122792 HDFS Write: 1794 SUCCESS
+Total MapReduce CPU Time Spent: 4 seconds 660 msec
+OK
+Abhishek 
+Aditya 
+Aditya Shinde
+Aditya_iot 
+Amersh 
+Ameya Jain
+Anirudh 
+Ankit Sharma
+Ankitjha 
+Anurag Tiwari
+Aravind 
+Ashad Nasim
+Ashish 
+Ayushi Mishra
+Bharath 
+Boktiar Ahmed Bappy
+Chaitra K Hiremath
+Deepranjan Gupta
+Dibyanshu 
+Harikrishnan Shaji
+Hitesh Choudhary
+Hrisikesh Neogi
+Hyder Abbas
+Ineuron Intelligence 
+Ishawant Kumar
+Jawala Prakash
+Jayant Kumar
+Jaydeep Dixit
+Khushboo Priya
+Madhulika G
+Mahak 
+Mahesh Sarade
+Maitry 
+Maneesh 
+Manjunatha A
+Mithun S
+Mukesh 
+Mukesh Rao 
+Muskan Garg
+Nandani Gupta
+Nishtha Jain
+Nitin M
+Prabir Kumar Satapathy
+Prateek _iot 
+Prerna Singh
+Rishav Dash
+Rohan 
+Saif Khan
+Saikumarreddy N
+Samprit 
+Sandipan Saha
+Sanjeev Kumar
+Sanjeevan 
+Saurabh Shukla
+Shiva Srivastava
+Shivan K
+Shivan_S 
+Shivananda Sonwane
+Shubham Sharma
+Sowmiya Sivakumar
+Spuri 
+Sudhanshu Kumar
+Suraj S Bilgi
+Swati 
+Tarun 
+Uday Mishra
+Vasanth P
+Vivek 
+Wasim 
+Zeeshan 
+Time taken: 25.892 seconds, Fetched: 70 row(s)
+
+hive> select agent , round(avg(avg_rating),2)
+    > from agent_perf_csv
+    > group by agent
+    > order by agent;
+Query ID = abc_20230219215134_a840645a-3bea-48f7-8758-1eb478526582
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676822612657_0005, Tracking URL = http://a6f03762a109:8088/proxy/application_1676822612657_0005/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676822612657_0005
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-19 21:51:44,797 Stage-1 map = 0%,  reduce = 0%
+2023-02-19 21:51:52,010 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.53 sec
+2023-02-19 21:51:58,149 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 6.18 sec
+MapReduce Total cumulative CPU time: 6 seconds 180 msec
+Ended Job = job_1676822612657_0005
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676822612657_0006, Tracking URL = http://a6f03762a109:8088/proxy/application_1676822612657_0006/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676822612657_0006
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-19 21:52:11,464 Stage-2 map = 0%,  reduce = 0%
+2023-02-19 21:52:18,609 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.93 sec
+2023-02-19 21:52:24,746 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.2 sec
+MapReduce Total cumulative CPU time: 4 seconds 200 msec
+Ended Job = job_1676822612657_0006
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 6.18 sec   HDFS Read: 125576 HDFS Write: 2713 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.2 sec   HDFS Read: 9961 HDFS Write: 2120 SUCCESS
+Total MapReduce CPU Time Spent: 10 seconds 380 msec
+OK
+Abhishek        0.0
+Aditya  0.0
+Aditya Shinde   1.8
+Aditya_iot      2.35
+Amersh  0.0
+Ameya Jain      2.22
+Anirudh         0.64
+Ankit Sharma    0.0
+Ankitjha        0.27
+Anurag Tiwari   0.18
+Aravind         2.18
+Ashad Nasim     0.17
+Ashish  0.0
+Ayushi Mishra   3.48
+Bharath         2.98
+Boktiar Ahmed Bappy     3.57
+Chaitra K Hiremath      0.86
+Deepranjan Gupta        2.89
+Dibyanshu       0.0
+Harikrishnan Shaji      2.64
+Hitesh Choudhary        0.0
+Hrisikesh Neogi 3.14
+Hyder Abbas     0.0
+Ineuron Intelligence    0.0
+Ishawant Kumar  3.54
+Jawala Prakash  3.47
+Jayant Kumar    1.07
+Jaydeep Dixit   3.17
+Khushboo Priya  3.7
+Madhulika G     3.5
+Mahak   0.1
+Mahesh Sarade   2.4
+Maitry  2.93
+Maneesh         0.17
+Manjunatha A    3.59
+Mithun S        2.36
+Mukesh  0.31
+Mukesh Rao      0.26
+Muskan Garg     0.71
+Nandani Gupta   2.92
+Nishtha Jain    3.28
+Nitin M 0.0
+Prabir Kumar Satapathy  2.51
+Prateek _iot    2.44
+Prerna Singh    3.23
+Rishav Dash     1.43
+Rohan   0.0
+Saif Khan       0.0
+Saikumarreddy N 1.98
+Samprit         0.0
+Sandipan Saha   0.43
+Sanjeev Kumar   3.38
+Sanjeevan       0.0
+Saurabh Shukla  0.56
+Shiva Srivastava        0.94
+Shivan K        2.84
+Shivan_S        0.14
+Shivananda Sonwane      4.23
+Shubham Sharma  3.23
+Sowmiya Sivakumar       1.26
+Spuri   0.0
+Sudhanshu Kumar 0.33
+Suraj S Bilgi   0.31
+Swati   2.42
+Tarun   0.05
+Uday Mishra     0.0
+Vasanth P       0.0
+Vivek   0.5
+Wasim   2.4
+Zeeshan         2.29
+Time taken: 51.059 seconds, Fetched: 70 row(s)
+
+hive> select agent,sum(total_feedback) as total
+    > from agent_perf_csv
+    > group by agent
+    > order by total;
+Query ID = abc_20230219224208_d5531ec2-ea21-409b-83ec-20e2e691968e
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676826228458_0004, Tracking URL = http://f9c6891a34bf:8088/proxy/application_1676826228458_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676826228458_0004
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-19 22:42:17,955 Stage-1 map = 0%,  reduce = 0%
+2023-02-19 22:42:25,101 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.51 sec
+2023-02-19 22:42:31,246 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.58 sec
+MapReduce Total cumulative CPU time: 4 seconds 580 msec
+Ended Job = job_1676826228458_0004
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676826228458_0005, Tracking URL = http://f9c6891a34bf:8088/proxy/application_1676826228458_0005/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676826228458_0005
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-19 22:42:44,187 Stage-2 map = 0%,  reduce = 0%
+2023-02-19 22:42:52,359 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 2.0 sec
+2023-02-19 22:42:57,466 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.33 sec
+MapReduce Total cumulative CPU time: 4 seconds 330 msec
+Ended Job = job_1676826228458_0005
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.58 sec   HDFS Read: 123457 HDFS Write: 2275 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.33 sec   HDFS Read: 9769 HDFS Write: 2011 SUCCESS
+Total MapReduce CPU Time Spent: 8 seconds 910 msec
+OK
+agent   total
+Abhishek        0
+Aditya  0
+Vasanth P       0
+Uday Mishra     0
+Spuri   0
+Ineuron Intelligence    0
+Ashish  0
+Amersh  0
+Dibyanshu       0
+Sanjeevan       0
+Samprit         0
+Saif Khan       0
+Rohan   0
+Ankit Sharma    0
+Hitesh Choudhary        0
+Nitin M 0
+Hyder Abbas     0
+Sudhanshu Kumar 2
+Maneesh         3
+Ankitjha        3
+Anurag Tiwari   3
+Shivan_S        4
+Mahak   5
+Mukesh Rao      5
+Tarun   6
+Saurabh Shukla  8
+Ashad Nasim     9
+Suraj S Bilgi   15
+Mukesh  17
+Sandipan Saha   18
+Vivek   20
+Muskan Garg     37
+Chaitra K Hiremath      37
+Anirudh         39
+Shiva Srivastava        46
+Jayant Kumar    70
+Prateek _iot    107
+Aditya_iot      131
+Sowmiya Sivakumar       141
+Aditya Shinde   153
+Ishawant Kumar  202
+Mahesh Sarade   216
+Prabir Kumar Satapathy  222
+Ameya Jain      228
+Harikrishnan Shaji      231
+Aravind         233
+Prerna Singh    235
+Shivan K        243
+Bharath         247
+Jawala Prakash  250
+Manjunatha A    254
+Nishtha Jain    257
+Shivananda Sonwane      263
+Rishav Dash     264
+Madhulika G     281
+Wasim   284
+Khushboo Priya  289
+Saikumarreddy N 290
+Shubham Sharma  300
+Swati   302
+Jaydeep Dixit   305
+Nandani Gupta   308
+Boktiar Ahmed Bappy     311
+Sanjeev Kumar   311
+Deepranjan Gupta        312
+Ayushi Mishra   329
+Zeeshan         335
+Maitry  347
+Mithun S        364
+Hrisikesh Neogi 367
+Time taken: 50.888 seconds, Fetched: 70 row(s)
