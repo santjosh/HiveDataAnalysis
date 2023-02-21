@@ -1,10 +1,13 @@
+
+
+
+1. Create a schema based on the given dataset
+
 create database hive_db;
-2. Store raw data into hdfs location
+
 
 use hive_db;
 
-hadoop fs -put /config/workspace/AgentLogingReport.csv /tmp/hive/abc
-hadoop fs -put /config/workspace/AgentPerformance.csv /tmp/hive/abc
 create table agent_log_csv(sl_num int,Agent String,login_date String,login_time String,logout_time String,duration String)
 row format delimited
 fields terminated by ','
@@ -13,16 +16,22 @@ tblproperties("skip.header.line.count"="1");
 create table agent_perf_csv(sl_num int,login_date String ,Agent String,total_chats int,avg_resp String,avg_resolution String,avg_rating float,total_feedback int)
 row format delimited
 fields terminated by ','
-tblproperties("skip.header.line.count"="1")
-;
+tblproperties("skip.header.line.count"="1");
+
+
+2. Dump the data inside the hdfs in the given schema location.
+
+hadoop fs -put /config/workspace/AgentLogingReport.csv /tmp/hive/abc
+hadoop fs -put /config/workspace/AgentPerformance.csv /tmp/hive/abc
+
+
 
 set hive.cli.print.header = true;
 
 load data inpath '/tmp/hive/abc/AgentPerformance.csv' into table agent_perf_csv;
 load data inpath '/tmp/hive/abc/AgentLogingReport.csv' into table agent_log_csv;
-/config/workspace/AgentLogingReport.csv
 
-/config/workspace/AgentPerformance.csv
+3. List of all agents' names.
 
 hive> select distinct(agent) from agent_perf_csv;
 Query ID = abc_20230219214412_8514df10-6318-4e48-a03c-f3a81c16fee1
@@ -118,6 +127,8 @@ Vivek
 Wasim 
 Zeeshan 
 Time taken: 25.892 seconds, Fetched: 70 row(s)
+
+4. Find out agent average rating.
 
 hive> select agent , round(avg(avg_rating),2)
     > from agent_perf_csv
@@ -234,6 +245,227 @@ Wasim   2.4
 Zeeshan         2.29
 Time taken: 51.059 seconds, Fetched: 70 row(s)
 
+5. Total working days for each agents
+
+hive> select agent, count(distinct(login_date)) as working_days
+    > from agent_log_orc
+    > group by agent
+    > order by working_days;
+Query ID = abc_20230220133230_fcd031b1-7ded-42ea-a5f0-9cf24b309762
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676879488414_0003, Tracking URL = http://f02d4ac4c334:8088/proxy/application_1676879488414_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676879488414_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-20 13:32:40,251 Stage-1 map = 0%,  reduce = 0%
+2023-02-20 13:32:48,423 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.42 sec
+2023-02-20 13:32:53,542 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.42 sec
+MapReduce Total cumulative CPU time: 4 seconds 420 msec
+Ended Job = job_1676879488414_0003
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676879488414_0004, Tracking URL = http://f02d4ac4c334:8088/proxy/application_1676879488414_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676879488414_0004
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-20 13:33:07,745 Stage-2 map = 0%,  reduce = 0%
+2023-02-20 13:33:14,895 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 2.39 sec
+2023-02-20 13:33:20,012 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.73 sec
+MapReduce Total cumulative CPU time: 4 seconds 730 msec
+Ended Job = job_1676879488414_0004
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.42 sec   HDFS Read: 11262 HDFS Write: 1616 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.73 sec   HDFS Read: 9113 HDFS Write: 1417 SUCCESS
+Total MapReduce CPU Time Spent: 9 seconds 150 msec
+OK
+agent   working_days
+Aditya Shinde   1
+Tarun   1
+Nitin M 1
+Ineuron Intelligence    1
+Hyder Abbas     2
+Suraj S Bilgi   2
+Ankitjha        2
+Mukesh  2
+Amersh  2
+Saurabh Shukla  4
+Swati   4
+Maitry  5
+Muskan Garg     6
+Sudhanshu Kumar 6
+Manjunatha A    7
+Saikumarreddy N 7
+Rishav Dash     7
+Prabir Kumar Satapathy  7
+Jaydeep Dixit   7
+Chaitra K Hiremath      7
+Aravind 7
+Ameya Jain      7
+Sowmiya Sivakumar       8
+Aditya_iot      8
+Shivan K        8
+Mahesh Sarade   8
+Madhulika G     8
+Bharath 8
+Khushboo Priya  8
+Mithun S        8
+Shiva Srivastava        8
+Nishtha Jain    8
+Sanjeev Kumar   9
+Zeeshan 9
+Jawala Prakash  9
+Hrisikesh Neogi 9
+Harikrishnan Shaji      9
+Dibyanshu       9
+Wasim   9
+Boktiar Ahmed Bappy     9
+Ayushi Mishra   9
+Nandani Gupta   9
+Prerna Singh    9
+Anurag Tiwari   10
+Shivananda Sonwane      10
+Deepranjan Gupta        10
+Prateek _iot    11
+Ishawant Kumar  11
+Shubham Sharma  11
+Time taken: 51.226 seconds, Fetched: 49 row(s)
+
+6. Total query that each agent have taken
+
+hive> select agent,sum(total_chats) as sum_of_query
+    > from agent_perf_orc1
+    > group by agent
+    > order by sum_of_query;
+Query ID = abc_20230220140602_4b61ee43-f9a5-4fc6-8ac2-cc4e16f7b258
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676879488414_0008, Tracking URL = http://f02d4ac4c334:8088/proxy/application_1676879488414_0008/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676879488414_0008
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-20 14:06:10,640 Stage-1 map = 0%,  reduce = 0%
+2023-02-20 14:06:18,815 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.39 sec
+2023-02-20 14:06:23,936 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 4.58 sec
+MapReduce Total cumulative CPU time: 4 seconds 580 msec
+Ended Job = job_1676879488414_0008
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676879488414_0009, Tracking URL = http://f02d4ac4c334:8088/proxy/application_1676879488414_0009/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676879488414_0009
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-20 14:06:37,700 Stage-2 map = 0%,  reduce = 0%
+2023-02-20 14:06:44,861 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 1.93 sec
+2023-02-20 14:06:50,992 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.2 sec
+2023-02-20 14:07:51,103 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.2 sec
+2023-02-20 14:08:51,109 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.2 sec
+2023-02-20 14:09:52,098 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 4.2 sec
+MapReduce Total cumulative CPU time: 4 seconds 200 msec
+Ended Job = job_1676879488414_0009
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 4.58 sec   HDFS Read: 25620 HDFS Write: 2288 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 4.2 sec   HDFS Read: 9787 HDFS Write: 2015 SUCCESS
+Total MapReduce CPU Time Spent: 8 seconds 780 msec
+OK
+agent   sum_of_query
+Rohan   0
+Aditya  0
+Ankit Sharma    0
+Vasanth P       0
+Uday Mishra     0
+Abhishek        0
+Nitin M 0
+Spuri   0
+Hyder Abbas     0
+Ineuron Intelligence    0
+Amersh  0
+Ashish  0
+Sanjeevan       0
+Saif Khan       0
+Hitesh Choudhary        1
+Dibyanshu       1
+Samprit         1
+Sudhanshu Kumar 2
+Anurag Tiwari   4
+Maneesh         4
+Mukesh Rao      5
+Ankitjha        5
+Mahak   7
+Shivan_S        7
+Saurabh Shukla  16
+Ashad Nasim     18
+Mukesh  19
+Tarun   22
+Suraj S Bilgi   28
+Sandipan Saha   30
+Vivek   44
+Shiva Srivastava        53
+Muskan Garg     56
+Chaitra K Hiremath      64
+Anirudh         81
+Jayant Kumar    127
+Prateek _iot    190
+Sowmiya Sivakumar       206
+Aditya_iot      231
+Aditya Shinde   277
+Prabir Kumar Satapathy  299
+Ameya Jain      322
+Ishawant Kumar  338
+Shivan K        357
+Saikumarreddy N 364
+Mahesh Sarade   364
+Aravind         366
+Bharath         369
+Nishtha Jain    373
+Harikrishnan Shaji      381
+Prerna Singh    401
+Rishav Dash     409
+Manjunatha A    413
+Wasim   433
+Jawala Prakash  439
+Shivananda Sonwane      441
+Khushboo Priya  446
+Boktiar Ahmed Bappy     452
+Madhulika G     469
+Deepranjan Gupta        493
+Mithun S        503
+Sanjeev Kumar   507
+Shubham Sharma  510
+Jaydeep Dixit   512
+Ayushi Mishra   514
+Swati   524
+Maitry  542
+Zeeshan         542
+Nandani Gupta   560
+Hrisikesh Neogi 578
+Time taken: 229.788 seconds, Fetched: 70 row(s)
+
+7. Total Feedback that each agent have received 
+7. Total Feedback that each agent have received 
+
 hive> select agent,sum(total_feedback) as total
     > from agent_perf_csv
     > group by agent
@@ -349,3 +581,2512 @@ Maitry  347
 Mithun S        364
 Hrisikesh Neogi 367
 Time taken: 50.888 seconds, Fetched: 70 row(s)
+
+8. Agent name who have average rating between 3.5 to 4 
+
+hive> select agent
+    > from agent_perf_orc1
+    > where avg_rating>=3.5 and avg_rating<4
+    > group by agent
+    > order by agent;
+
+
+9. Agent name who have rating less than 3.5 
+
+hive> select agent
+    > from agent_perf_orc1
+    > where avg_rating<3.5
+    > group by agent
+    > order by agent;
+Query ID = abc_20230221153414_be326be5-3b6e-4e27-803d-4f73ae85d4a0
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676973070952_0003, Tracking URL = http://7676b56ef6cb:8088/proxy/application_1676973070952_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676973070952_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 15:34:29,330 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 15:34:43,079 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 21.88 sec
+2023-02-21 15:34:51,456 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 26.67 sec
+MapReduce Total cumulative CPU time: 26 seconds 670 msec
+Ended Job = job_1676973070952_0003
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676973070952_0004, Tracking URL = http://7676b56ef6cb:8088/proxy/application_1676973070952_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676973070952_0004
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-21 15:35:10,943 Stage-2 map = 0%,  reduce = 0%
+2023-02-21 15:35:22,458 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 4.19 sec
+2023-02-21 15:35:30,830 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 9.67 sec
+MapReduce Total cumulative CPU time: 9 seconds 670 msec
+Ended Job = job_1676973070952_0004
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 26.67 sec   HDFS Read: 26675 HDFS Write: 2153 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 9.67 sec   HDFS Read: 8956 HDFS Write: 1794 SUCCESS
+Total MapReduce CPU Time Spent: 36 seconds 340 msec
+OK
+agent
+Abhishek 
+Aditya 
+Aditya Shinde
+Aditya_iot 
+Amersh 
+Ameya Jain
+Anirudh 
+Ankit Sharma
+Ankitjha 
+Anurag Tiwari
+Aravind 
+Ashad Nasim
+Ashish 
+Ayushi Mishra
+Bharath 
+Boktiar Ahmed Bappy
+Chaitra K Hiremath
+Deepranjan Gupta
+Dibyanshu 
+Harikrishnan Shaji
+Hitesh Choudhary
+Hrisikesh Neogi
+Hyder Abbas
+Ineuron Intelligence 
+Ishawant Kumar
+Jawala Prakash
+Jayant Kumar
+Jaydeep Dixit
+Khushboo Priya
+Madhulika G
+Mahak 
+Mahesh Sarade
+Maitry 
+Maneesh 
+Manjunatha A
+Mithun S
+Mukesh 
+Mukesh Rao 
+Muskan Garg
+Nandani Gupta
+Nishtha Jain
+Nitin M
+Prabir Kumar Satapathy
+Prateek _iot 
+Prerna Singh
+Rishav Dash
+Rohan 
+Saif Khan
+Saikumarreddy N
+Samprit 
+Sandipan Saha
+Sanjeev Kumar
+Sanjeevan 
+Saurabh Shukla
+Shiva Srivastava
+Shivan K
+Shivan_S 
+Shivananda Sonwane
+Shubham Sharma
+Sowmiya Sivakumar
+Spuri 
+Sudhanshu Kumar
+Suraj S Bilgi
+Swati 
+Tarun 
+Uday Mishra
+Vasanth P
+Vivek 
+Wasim 
+Zeeshan 
+Time taken: 78.8 seconds, Fetched: 70 row(s)
+10. Agent name who have rating more than 4.5 
+hive> select agent
+    > from agent_perf_orc1
+    > where avg_rating>4.5
+    > group by agent
+    > order by agent;
+Query ID = abc_20230221162151_e89231b0-620c-4c92-be93-1facd5aea76a
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676976464675_0002, Tracking URL = http://bd0691242f34:8088/proxy/application_1676976464675_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676976464675_0002
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 16:22:06,937 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 16:22:20,547 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 21.89 sec
+2023-02-21 16:22:28,944 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 26.4 sec
+MapReduce Total cumulative CPU time: 26 seconds 400 msec
+Ended Job = job_1676976464675_0002
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676976464675_0003, Tracking URL = http://bd0691242f34:8088/proxy/application_1676976464675_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676976464675_0003
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-21 16:22:49,340 Stage-2 map = 0%,  reduce = 0%
+2023-02-21 16:22:59,764 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 3.78 sec
+2023-02-21 16:23:08,127 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 8.2 sec
+MapReduce Total cumulative CPU time: 8 seconds 200 msec
+Ended Job = job_1676976464675_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 26.4 sec   HDFS Read: 26677 HDFS Write: 1520 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 8.2 sec   HDFS Read: 8323 HDFS Write: 1276 SUCCESS
+Total MapReduce CPU Time Spent: 34 seconds 600 msec
+OK
+Aditya Shinde
+Aditya_iot 
+Ameya Jain
+Anirudh 
+Ankitjha 
+Aravind 
+Ayushi Mishra
+Bharath 
+Boktiar Ahmed Bappy
+Chaitra K Hiremath
+Deepranjan Gupta
+Harikrishnan Shaji
+Hrisikesh Neogi
+Ishawant Kumar
+Jawala Prakash
+Jayant Kumar
+Jaydeep Dixit
+Khushboo Priya
+Madhulika G
+Mahesh Sarade
+Maitry 
+Manjunatha A
+Mithun S
+Mukesh 
+Mukesh Rao 
+Muskan Garg
+Nandani Gupta
+Nishtha Jain
+Prabir Kumar Satapathy
+Prateek _iot 
+Prerna Singh
+Rishav Dash
+Saikumarreddy N
+Sandipan Saha
+Sanjeev Kumar
+Saurabh Shukla
+Shiva Srivastava
+Shivan K
+Shivananda Sonwane
+Shubham Sharma
+Sowmiya Sivakumar
+Sudhanshu Kumar
+Suraj S Bilgi
+Swati 
+Vivek 
+Wasim 
+Zeeshan 
+Time taken: 79.708 seconds, Fetched: 47 row(s)
+
+11. How many feedback agents have received more than 4.5 average
+
+select agent,sum(total_feedback) as feedbacks
+from agent_perf_orc1
+where avg_rating>4.5
+group by agent
+order by feedbacks;
+
+hive> select agent,sum(total_feedback) as feedbacks
+    > from agent_perf_orc1
+    > where avg_rating>4.5
+    > group by agent
+    > order by feedbacks;
+Query ID = abc_20230221163001_0ee2a29e-4c50-4f01-bec3-faf88917bd9c
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676976464675_0004, Tracking URL = http://bd0691242f34:8088/proxy/application_1676976464675_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676976464675_0004
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 16:30:17,723 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 16:30:31,432 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 29.33 sec
+2023-02-21 16:30:40,813 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 33.97 sec
+MapReduce Total cumulative CPU time: 33 seconds 970 msec
+Ended Job = job_1676976464675_0004
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676976464675_0005, Tracking URL = http://bd0691242f34:8088/proxy/application_1676976464675_0005/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676976464675_0005
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-21 16:30:59,384 Stage-2 map = 0%,  reduce = 0%
+2023-02-21 16:31:10,849 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 3.37 sec
+2023-02-21 16:31:18,160 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 7.88 sec
+MapReduce Total cumulative CPU time: 7 seconds 880 msec
+Ended Job = job_1676976464675_0005
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 33.97 sec   HDFS Read: 28816 HDFS Write: 1580 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 7.88 sec   HDFS Read: 9082 HDFS Write: 1420 SUCCESS
+Total MapReduce CPU Time Spent: 41 seconds 850 msec
+OK
+Sandipan Saha   1
+Mukesh Rao      1
+Ankitjha        1
+Anirudh         2
+Sudhanshu Kumar 2
+Shiva Srivastava        2
+Saurabh Shukla  3
+Vivek   3
+Suraj S Bilgi   4
+Chaitra K Hiremath      5
+Jayant Kumar    7
+Muskan Garg     14
+Sowmiya Sivakumar       16
+Mukesh  17
+Nishtha Jain    18
+Rishav Dash     27
+Jawala Prakash  33
+Aditya_iot      43
+Mahesh Sarade   46
+Zeeshan         48
+Boktiar Ahmed Bappy     52
+Prabir Kumar Satapathy  53
+Prateek _iot    54
+Madhulika G     67
+Aditya Shinde   73
+Ayushi Mishra   75
+Ishawant Kumar  79
+Harikrishnan Shaji      80
+Maitry  81
+Prerna Singh    82
+Deepranjan Gupta        83
+Nandani Gupta   91
+Mithun S        93
+Swati   103
+Shivan K        130
+Manjunatha A    132
+Khushboo Priya  134
+Ameya Jain      150
+Shivananda Sonwane      154
+Shubham Sharma  155
+Wasim   156
+Sanjeev Kumar   164
+Aravind         178
+Jaydeep Dixit   179
+Hrisikesh Neogi 183
+Saikumarreddy N 184
+Bharath         231
+Time taken: 78.686 seconds, Fetched: 47 row(s)
+
+12. average weekly response time for each agent 
+
+hive> with cte as 
+    > (select weekofyear(login_date) as week,agent,avg(avg_resp) over (partition by weekofyear(login_date),agent) as avg_response_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+    > select week,agent,from_unixtime(unix_timestamp(cast(cast (avg_response_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+    > from cte
+    > where nth=1;
+Query ID = abc_20230221121311_484cc4a1-07fd-4ee7-9456-80b9ec828342
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676961273130_0003, Tracking URL = http://65d2410592ad:8088/proxy/application_1676961273130_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676961273130_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 12:13:21,731 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 12:13:29,903 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 11.12 sec
+2023-02-21 12:13:36,053 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 15.46 sec
+MapReduce Total cumulative CPU time: 15 seconds 460 msec
+Ended Job = job_1676961273130_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 15.46 sec   HDFS Read: 29995 HDFS Write: 12472 SUCCESS
+Total MapReduce CPU Time Spent: 15 seconds 460 msec
+OK
+week    agent   avg_re_time_per_agnet
+26      Abhishek        0:00:00
+26      Aditya  0:00:00
+26      Aditya Shinde   0:00:55
+26      Aditya_iot      0:00:00
+26      Amersh  0:00:00
+26      Ameya Jain      0:00:00
+26      Anirudh         0:00:00
+26      Ankit Sharma    0:00:00
+26      Ankitjha        0:00:00
+26      Anurag Tiwari   0:00:00
+26      Aravind         0:00:00
+26      Ashad Nasim     0:00:00
+26      Ashish  0:00:00
+26      Ayushi Mishra   0:00:57
+26      Bharath         0:00:28
+26      Boktiar Ahmed Bappy     0:01:00
+26      Chaitra K Hiremath      0:00:00
+26      Deepranjan Gupta        0:00:44
+26      Dibyanshu       0:00:00
+26      Harikrishnan Shaji      0:00:00
+26      Hitesh Choudhary        0:00:00
+26      Hrisikesh Neogi 0:00:37
+26      Hyder Abbas     0:00:00
+26      Ineuron Intelligence    0:00:00
+26      Ishawant Kumar  0:00:00
+26      Jawala Prakash  0:00:55
+26      Jayant Kumar    0:01:03
+26      Jaydeep Dixit   0:00:39
+26      Khushboo Priya  0:01:20
+26      Madhulika G     0:01:34
+26      Mahak   0:00:00
+26      Mahesh Sarade   0:00:00
+26      Maitry  0:00:41
+26      Maneesh         0:00:00
+26      Manjunatha A    0:00:42
+26      Mithun S        0:00:00
+26      Mukesh  0:00:00
+26      Mukesh Rao      0:00:00
+26      Muskan Garg     0:00:00
+26      Nandani Gupta   0:01:48
+26      Nishtha Jain    0:00:00
+26      Nitin M 0:00:00
+26      Prabir Kumar Satapathy  0:00:00
+26      Prateek _iot    0:00:00
+26      Prerna Singh    0:01:04
+26      Rishav Dash     0:00:45
+26      Rohan   0:00:00
+26      Saif Khan       0:00:00
+26      Saikumarreddy N 0:00:00
+26      Samprit         0:00:00
+26      Sandipan Saha   0:00:00
+26      Sanjeev Kumar   0:01:16
+26      Sanjeevan       0:00:00
+26      Saurabh Shukla  0:00:07
+26      Shiva Srivastava        0:00:00
+26      Shivan K        0:00:56
+26      Shivan_S        0:00:00
+26      Shivananda Sonwane      0:01:17
+26      Shubham Sharma  0:00:54
+26      Sowmiya Sivakumar       0:00:00
+26      Spuri   0:00:00
+26      Sudhanshu Kumar 0:00:00
+26      Suraj S Bilgi   0:00:00
+26      Swati   0:01:47
+26      Tarun   0:00:00
+26      Uday Mishra     0:00:00
+26      Vasanth P       0:00:00
+26      Vivek   0:00:00
+26      Wasim   0:00:00
+26      Zeeshan         0:00:00
+27      Abhishek        0:00:00
+27      Aditya  0:00:00
+27      Aditya Shinde   0:00:47
+27      Aditya_iot      0:00:20
+27      Amersh  0:00:00
+27      Ameya Jain      0:00:00
+27      Anirudh         0:01:17
+27      Ankit Sharma    0:00:00
+27      Ankitjha        0:00:00
+27      Anurag Tiwari   0:00:36
+27      Aravind         0:00:21
+27      Ashad Nasim     0:02:45
+27      Ashish  0:00:00
+27      Ayushi Mishra   0:00:50
+27      Bharath         0:00:24
+27      Boktiar Ahmed Bappy     0:00:42
+27      Chaitra K Hiremath      0:00:00
+27      Deepranjan Gupta        0:00:59
+27      Dibyanshu       0:00:05
+27      Harikrishnan Shaji      0:00:27
+27      Hitesh Choudhary        0:00:00
+27      Hrisikesh Neogi 0:00:46
+27      Hyder Abbas     0:00:00
+27      Ineuron Intelligence    0:00:00
+27      Ishawant Kumar  0:00:39
+27      Jawala Prakash  0:01:50
+27      Jayant Kumar    0:00:39
+27      Jaydeep Dixit   0:00:51
+27      Khushboo Priya  0:01:10
+27      Madhulika G     0:01:00
+27      Mahak   0:00:00
+27      Mahesh Sarade   0:00:38
+27      Maitry  0:00:48
+27      Maneesh         0:00:19
+27      Manjunatha A    0:00:42
+27      Mithun S        0:00:02
+27      Mukesh  0:00:00
+27      Mukesh Rao      0:00:56
+27      Muskan Garg     0:00:00
+27      Nandani Gupta   0:00:57
+27      Nishtha Jain    0:01:12
+27      Nitin M 0:00:00
+27      Prabir Kumar Satapathy  0:01:00
+27      Prateek _iot    0:00:09
+27      Prerna Singh    0:00:49
+27      Rishav Dash     0:00:30
+27      Rohan   0:00:00
+27      Saif Khan       0:00:00
+27      Saikumarreddy N 0:00:00
+27      Samprit         0:00:00
+27      Sandipan Saha   0:00:00
+27      Sanjeev Kumar   0:00:39
+27      Sanjeevan       0:00:00
+27      Saurabh Shukla  0:00:10
+27      Shiva Srivastava        0:00:00
+27      Shivan K        0:00:52
+27      Shivan_S        0:00:10
+27      Shivananda Sonwane      0:00:52
+27      Shubham Sharma  0:00:41
+27      Sowmiya Sivakumar       0:00:00
+27      Spuri   0:00:00
+27      Sudhanshu Kumar 0:00:06
+27      Suraj S Bilgi   0:00:00
+27      Swati   0:01:09
+27      Tarun   0:00:00
+27      Uday Mishra     0:00:00
+27      Vasanth P       0:00:00
+27      Vivek   0:00:15
+27      Wasim   0:00:08
+27      Zeeshan         0:00:23
+28      Abhishek        0:00:00
+28      Aditya  0:00:00
+28      Aditya Shinde   0:00:56
+28      Aditya_iot      0:00:52
+28      Amersh  0:00:00
+28      Ameya Jain      0:00:32
+28      Anirudh         0:00:15
+28      Ankit Sharma    0:00:00
+28      Ankitjha        0:00:00
+28      Anurag Tiwari   0:00:00
+28      Aravind         0:00:34
+28      Ashad Nasim     0:00:00
+28      Ashish  0:00:00
+28      Ayushi Mishra   0:00:48
+28      Bharath         0:00:14
+28      Boktiar Ahmed Bappy     0:00:59
+28      Chaitra K Hiremath      0:00:00
+28      Deepranjan Gupta        0:00:44
+28      Dibyanshu       0:00:00
+28      Harikrishnan Shaji      0:00:39
+28      Hitesh Choudhary        0:00:00
+28      Hrisikesh Neogi 0:00:45
+28      Hyder Abbas     0:00:00
+28      Ineuron Intelligence    0:00:00
+28      Ishawant Kumar  0:01:05
+28      Jawala Prakash  0:01:56
+28      Jayant Kumar    0:00:12
+28      Jaydeep Dixit   0:00:46
+28      Khushboo Priya  0:00:58
+28      Madhulika G     0:01:21
+28      Mahak   0:00:00
+28      Mahesh Sarade   0:00:55
+28      Maitry  0:01:14
+28      Maneesh         0:00:00
+28      Manjunatha A    0:00:33
+28      Mithun S        0:00:43
+28      Mukesh  0:00:00
+28      Mukesh Rao      0:00:00
+28      Muskan Garg     0:00:00
+28      Nandani Gupta   0:00:50
+28      Nishtha Jain    0:01:00
+28      Nitin M 0:00:00
+28      Prabir Kumar Satapathy  0:00:34
+28      Prateek _iot    0:00:21
+28      Prerna Singh    0:00:41
+28      Rishav Dash     0:00:23
+28      Rohan   0:00:00
+28      Saif Khan       0:00:00
+28      Saikumarreddy N 0:00:22
+28      Samprit         0:00:00
+28      Sandipan Saha   0:00:25
+28      Sanjeev Kumar   0:01:10
+28      Sanjeevan       0:00:00
+28      Saurabh Shukla  0:00:02
+28      Shiva Srivastava        0:00:00
+28      Shivan K        0:00:29
+28      Shivan_S        0:00:00
+28      Shivananda Sonwane      0:00:49
+28      Shubham Sharma  0:00:36
+28      Sowmiya Sivakumar       0:00:00
+28      Spuri   0:00:00
+28      Sudhanshu Kumar 0:00:10
+28      Suraj S Bilgi   0:00:00
+28      Swati   0:01:17
+28      Tarun   0:00:00
+28      Uday Mishra     0:00:00
+28      Vasanth P       0:00:00
+28      Vivek   0:00:43
+28      Wasim   0:00:29
+28      Zeeshan         0:02:03
+29      Abhishek        0:00:00
+29      Aditya  0:00:00
+29      Aditya Shinde   0:00:00
+29      Aditya_iot      0:00:30
+29      Amersh  0:00:00
+29      Ameya Jain      0:00:29
+29      Anirudh         0:00:00
+29      Ankit Sharma    0:00:00
+29      Ankitjha        0:00:00
+29      Anurag Tiwari   0:00:00
+29      Aravind         0:00:36
+29      Ashad Nasim     0:00:00
+29      Ashish  0:00:00
+29      Ayushi Mishra   0:01:25
+29      Bharath         0:00:45
+29      Boktiar Ahmed Bappy     0:01:06
+29      Chaitra K Hiremath      0:00:32
+29      Deepranjan Gupta        0:00:46
+29      Dibyanshu       0:00:00
+29      Harikrishnan Shaji      0:00:48
+29      Hitesh Choudhary        0:00:00
+29      Hrisikesh Neogi 0:00:58
+29      Hyder Abbas     0:00:00
+29      Ineuron Intelligence    0:00:00
+29      Ishawant Kumar  0:01:02
+29      Jawala Prakash  0:01:13
+29      Jayant Kumar    0:00:00
+29      Jaydeep Dixit   0:00:43
+29      Khushboo Priya  0:00:51
+29      Madhulika G     0:00:49
+29      Mahak   0:00:00
+29      Mahesh Sarade   0:00:59
+29      Maitry  0:01:10
+29      Maneesh         0:00:00
+29      Manjunatha A    0:00:32
+29      Mithun S        0:00:44
+29      Mukesh  0:00:00
+29      Mukesh Rao      0:00:00
+29      Muskan Garg     0:00:00
+29      Nandani Gupta   0:00:57
+29      Nishtha Jain    0:01:28
+29      Nitin M 0:00:00
+29      Prabir Kumar Satapathy  0:00:39
+29      Prateek _iot    0:00:32
+29      Prerna Singh    0:00:43
+29      Rishav Dash     0:00:25
+29      Rohan   0:00:00
+29      Saif Khan       0:00:00
+29      Saikumarreddy N 0:00:51
+29      Samprit         0:00:00
+29      Sandipan Saha   0:00:00
+29      Sanjeev Kumar   0:00:41
+29      Sanjeevan       0:00:00
+29      Saurabh Shukla  0:00:00
+29      Shiva Srivastava        0:00:23
+29      Shivan K        0:01:07
+29      Shivan_S        0:00:00
+29      Shivananda Sonwane      0:00:59
+29      Shubham Sharma  0:00:51
+29      Sowmiya Sivakumar       0:01:00
+29      Spuri   0:00:00
+29      Sudhanshu Kumar 0:00:00
+29      Suraj S Bilgi   0:00:00
+29      Swati   0:00:30
+29      Tarun   0:00:00
+29      Uday Mishra     0:00:00
+29      Vasanth P       0:00:00
+29      Vivek   0:00:00
+29      Wasim   0:00:46
+29      Zeeshan         0:01:02
+30      Abhishek        0:00:00
+30      Aditya  0:00:00
+30      Aditya Shinde   0:00:00
+30      Aditya_iot      0:00:50
+30      Amersh  0:00:00
+30      Ameya Jain      0:00:33
+30      Anirudh         0:00:00
+30      Ankit Sharma    0:00:00
+30      Ankitjha        0:00:22
+30      Anurag Tiwari   0:00:00
+30      Aravind         0:00:00
+30      Ashad Nasim     0:00:00
+30      Ashish  0:00:00
+30      Ayushi Mishra   0:00:58
+30      Bharath         0:00:22
+30      Boktiar Ahmed Bappy     0:01:43
+30      Chaitra K Hiremath      0:00:37
+30      Deepranjan Gupta        0:01:09
+30      Dibyanshu       0:00:00
+30      Harikrishnan Shaji      0:00:34
+30      Hitesh Choudhary        0:00:00
+30      Hrisikesh Neogi 0:00:59
+30      Hyder Abbas     0:00:00
+30      Ineuron Intelligence    0:00:00
+30      Ishawant Kumar  0:00:55
+30      Jawala Prakash  0:01:33
+30      Jayant Kumar    0:00:00
+30      Jaydeep Dixit   0:00:37
+30      Khushboo Priya  0:00:56
+30      Madhulika G     0:01:02
+30      Mahak   0:00:00
+30      Mahesh Sarade   0:00:53
+30      Maitry  0:01:12
+30      Maneesh         0:00:00
+30      Manjunatha A    0:00:33
+30      Mithun S        0:00:38
+30      Mukesh  0:00:16
+30      Mukesh Rao      0:00:00
+30      Muskan Garg     0:00:29
+30      Nandani Gupta   0:00:51
+30      Nishtha Jain    0:00:45
+30      Nitin M 0:00:00
+30      Prabir Kumar Satapathy  0:00:32
+30      Prateek _iot    0:00:37
+30      Prerna Singh    0:00:49
+30      Rishav Dash     0:00:35
+30      Rohan   0:00:00
+30      Saif Khan       0:00:00
+30      Saikumarreddy N 0:00:40
+30      Samprit         0:00:00
+30      Sandipan Saha   0:00:00
+30      Sanjeev Kumar   0:00:42
+30      Sanjeevan       0:00:00
+30      Saurabh Shukla  0:00:00
+30      Shiva Srivastava        0:00:22
+30      Shivan K        0:00:37
+30      Shivan_S        0:00:00
+30      Shivananda Sonwane      0:00:53
+30      Shubham Sharma  0:01:03
+30      Sowmiya Sivakumar       0:01:00
+30      Spuri   0:00:00
+30      Sudhanshu Kumar 0:00:00
+30      Suraj S Bilgi   0:00:30
+30      Swati   0:00:29
+30      Tarun   0:00:00
+30      Uday Mishra     0:00:00
+30      Vasanth P       0:00:00
+30      Vivek   0:00:00
+30      Wasim   0:00:50
+30      Zeeshan         0:01:03
+Time taken: 26.735 seconds, Fetched: 350 row(s)
+
+13. average weekly resolution time for each agents 
+
+hive> with cte as 
+    > (select weekofyear(login_date) as week,agent,avg(avg_resolution) over (partition by weekofyear(login_date),agent) as avg_resolution_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+    > select week,agent,from_unixtime(unix_timestamp(cast(cast (avg_resolution_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+    > from cte
+    > where nth=1;
+Query ID = abc_20230221120839_857642ef-2ccd-4eba-af7c-dbb9c1de9809
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676961273130_0002, Tracking URL = http://65d2410592ad:8088/proxy/application_1676961273130_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676961273130_0002
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 12:08:51,218 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 12:08:59,418 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 14.77 sec
+2023-02-21 12:09:05,582 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 19.18 sec
+MapReduce Total cumulative CPU time: 19 seconds 180 msec
+Ended Job = job_1676961273130_0002
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 19.18 sec   HDFS Read: 30458 HDFS Write: 12472 SUCCESS
+Total MapReduce CPU Time Spent: 19 seconds 180 msec
+OK
+week    agent   avg_re_time_per_agnet
+26      Abhishek        0:00:00
+26      Aditya  0:00:00
+26      Aditya Shinde   0:15:27
+26      Aditya_iot      0:00:00
+26      Amersh  0:00:00
+26      Ameya Jain      0:00:00
+26      Anirudh         0:00:00
+26      Ankit Sharma    0:00:00
+26      Ankitjha        0:00:00
+26      Anurag Tiwari   0:00:00
+26      Aravind         0:00:00
+26      Ashad Nasim     0:00:00
+26      Ashish  0:00:00
+26      Ayushi Mishra   0:17:01
+26      Bharath         0:06:28
+26      Boktiar Ahmed Bappy     0:15:00
+26      Chaitra K Hiremath      0:00:00
+26      Deepranjan Gupta        0:20:08
+26      Dibyanshu       0:00:00
+26      Harikrishnan Shaji      0:00:00
+26      Hitesh Choudhary        0:00:00
+26      Hrisikesh Neogi 0:13:25
+26      Hyder Abbas     0:00:00
+26      Ineuron Intelligence    0:00:00
+26      Ishawant Kumar  0:00:00
+26      Jawala Prakash  0:10:57
+26      Jayant Kumar    0:12:43
+26      Jaydeep Dixit   0:13:06
+26      Khushboo Priya  0:18:26
+26      Madhulika G     0:12:55
+26      Mahak   0:00:00
+26      Mahesh Sarade   0:00:00
+26      Maitry  0:10:59
+26      Maneesh         0:00:00
+26      Manjunatha A    0:17:50
+26      Mithun S        0:00:00
+26      Mukesh  0:00:00
+26      Mukesh Rao      0:00:00
+26      Muskan Garg     0:00:00
+26      Nandani Gupta   0:17:30
+26      Nishtha Jain    0:00:00
+26      Nitin M 0:00:00
+26      Prabir Kumar Satapathy  0:00:00
+26      Prateek _iot    0:00:00
+26      Prerna Singh    0:10:18
+26      Rishav Dash     0:09:29
+26      Rohan   0:00:00
+26      Saif Khan       0:00:00
+26      Saikumarreddy N 0:00:00
+26      Samprit         0:00:00
+26      Sandipan Saha   0:00:00
+26      Sanjeev Kumar   0:20:40
+26      Sanjeevan       0:00:00
+26      Saurabh Shukla  0:03:31
+26      Shiva Srivastava        0:00:00
+26      Shivan K        0:30:35
+26      Shivan_S        0:00:00
+26      Shivananda Sonwane      0:22:14
+26      Shubham Sharma  0:16:24
+26      Sowmiya Sivakumar       0:00:00
+26      Spuri   0:00:00
+26      Sudhanshu Kumar 0:00:00
+26      Suraj S Bilgi   0:00:00
+26      Swati   0:17:39
+26      Tarun   0:15:04
+26      Uday Mishra     0:00:00
+26      Vasanth P       0:00:00
+26      Vivek   0:00:00
+26      Wasim   0:00:00
+26      Zeeshan         0:00:00
+27      Abhishek        0:00:00
+27      Aditya  0:00:00
+27      Aditya Shinde   0:15:03
+27      Aditya_iot      0:05:09
+27      Amersh  0:00:00
+27      Ameya Jain      0:00:15
+27      Anirudh         0:08:07
+27      Ankit Sharma    0:00:00
+27      Ankitjha        0:03:03
+27      Anurag Tiwari   0:05:16
+27      Aravind         0:10:22
+27      Ashad Nasim     0:01:29
+27      Ashish  0:00:00
+27      Ayushi Mishra   0:12:23
+27      Bharath         0:12:21
+27      Boktiar Ahmed Bappy     0:33:08
+27      Chaitra K Hiremath      0:00:00
+27      Deepranjan Gupta        0:25:48
+27      Dibyanshu       0:01:45
+27      Harikrishnan Shaji      0:05:59
+27      Hitesh Choudhary        0:00:00
+27      Hrisikesh Neogi 0:14:13
+27      Hyder Abbas     0:00:00
+27      Ineuron Intelligence    0:00:00
+27      Ishawant Kumar  0:14:11
+27      Jawala Prakash  0:07:57
+27      Jayant Kumar    0:14:00
+27      Jaydeep Dixit   0:18:10
+27      Khushboo Priya  0:23:55
+27      Madhulika G     0:14:33
+27      Mahak   0:02:52
+27      Mahesh Sarade   0:06:02
+27      Maitry  0:11:19
+27      Maneesh         0:02:58
+27      Manjunatha A    0:20:05
+27      Mithun S        0:03:29
+27      Mukesh  0:00:00
+27      Mukesh Rao      0:32:53
+27      Muskan Garg     0:00:00
+27      Nandani Gupta   0:16:42
+27      Nishtha Jain    0:11:52
+27      Nitin M 0:00:00
+27      Prabir Kumar Satapathy  0:05:14
+27      Prateek _iot    0:05:17
+27      Prerna Singh    0:13:41
+27      Rishav Dash     0:07:45
+27      Rohan   0:00:00
+27      Saif Khan       0:00:00
+27      Saikumarreddy N 0:00:00
+27      Samprit         0:00:14
+27      Sandipan Saha   0:00:00
+27      Sanjeev Kumar   0:15:02
+27      Sanjeevan       0:00:00
+27      Saurabh Shukla  0:02:37
+27      Shiva Srivastava        0:00:00
+27      Shivan K        0:19:18
+27      Shivan_S        0:02:37
+27      Shivananda Sonwane      0:20:53
+27      Shubham Sharma  0:19:38
+27      Sowmiya Sivakumar       0:00:00
+27      Spuri   0:00:00
+27      Sudhanshu Kumar 0:02:32
+27      Suraj S Bilgi   0:00:00
+27      Swati   0:14:43
+27      Tarun   0:00:00
+27      Uday Mishra     0:00:00
+27      Vasanth P       0:00:00
+27      Vivek   0:02:25
+27      Wasim   0:03:16
+27      Zeeshan         0:05:23
+28      Abhishek        0:00:00
+28      Aditya  0:00:00
+28      Aditya Shinde   0:22:38
+28      Aditya_iot      0:15:11
+28      Amersh  0:00:00
+28      Ameya Jain      0:08:03
+28      Anirudh         0:05:07
+28      Ankit Sharma    0:00:00
+28      Ankitjha        0:00:00
+28      Anurag Tiwari   0:00:00
+28      Aravind         0:14:25
+28      Ashad Nasim     0:00:00
+28      Ashish  0:00:00
+28      Ayushi Mishra   0:14:36
+28      Bharath         0:07:21
+28      Boktiar Ahmed Bappy     0:06:48
+28      Chaitra K Hiremath      0:00:00
+28      Deepranjan Gupta        0:16:32
+28      Dibyanshu       0:00:00
+28      Harikrishnan Shaji      0:12:42
+28      Hitesh Choudhary        0:00:12
+28      Hrisikesh Neogi 0:12:27
+28      Hyder Abbas     0:00:00
+28      Ineuron Intelligence    0:00:00
+28      Ishawant Kumar  0:13:14
+28      Jawala Prakash  0:14:34
+28      Jayant Kumar    0:01:36
+28      Jaydeep Dixit   0:19:11
+28      Khushboo Priya  0:15:54
+28      Madhulika G     0:16:27
+28      Mahak   0:00:00
+28      Mahesh Sarade   0:10:15
+28      Maitry  0:13:57
+28      Maneesh         0:00:00
+28      Manjunatha A    0:16:09
+28      Mithun S        0:05:47
+28      Mukesh  0:00:00
+28      Mukesh Rao      0:00:00
+28      Muskan Garg     0:00:00
+28      Nandani Gupta   0:17:01
+28      Nishtha Jain    0:10:58
+28      Nitin M 0:00:00
+28      Prabir Kumar Satapathy  0:08:20
+28      Prateek _iot    0:11:30
+28      Prerna Singh    0:23:25
+28      Rishav Dash     0:06:43
+28      Rohan   0:00:00
+28      Saif Khan       0:00:00
+28      Saikumarreddy N 0:08:26
+28      Samprit         0:00:00
+28      Sandipan Saha   0:11:16
+28      Sanjeev Kumar   0:19:27
+28      Sanjeevan       0:00:00
+28      Saurabh Shukla  0:00:57
+28      Shiva Srivastava        0:00:00
+28      Shivan K        0:11:47
+28      Shivan_S        0:00:00
+28      Shivananda Sonwane      0:19:30
+28      Shubham Sharma  0:16:59
+28      Sowmiya Sivakumar       0:00:00
+28      Spuri   0:00:00
+28      Sudhanshu Kumar 0:05:48
+28      Suraj S Bilgi   0:00:00
+28      Swati   0:17:11
+28      Tarun   0:00:00
+28      Uday Mishra     0:00:00
+28      Vasanth P       0:00:00
+28      Vivek   0:08:29
+28      Wasim   0:14:27
+28      Zeeshan         0:16:24
+29      Abhishek        0:00:00
+29      Aditya  0:00:00
+29      Aditya Shinde   0:00:00
+29      Aditya_iot      0:11:12
+29      Amersh  0:00:00
+29      Ameya Jain      0:08:17
+29      Anirudh         0:00:00
+29      Ankit Sharma    0:00:00
+29      Ankitjha        0:00:00
+29      Anurag Tiwari   0:00:00
+29      Aravind         0:13:27
+29      Ashad Nasim     0:00:00
+29      Ashish  0:00:00
+29      Ayushi Mishra   0:18:27
+29      Bharath         0:09:24
+29      Boktiar Ahmed Bappy     0:11:35
+29      Chaitra K Hiremath      0:00:42
+29      Deepranjan Gupta        0:22:00
+29      Dibyanshu       0:00:00
+29      Harikrishnan Shaji      0:17:50
+29      Hitesh Choudhary        0:00:00
+29      Hrisikesh Neogi 0:18:50
+29      Hyder Abbas     0:00:00
+29      Ineuron Intelligence    0:00:00
+29      Ishawant Kumar  0:17:59
+29      Jawala Prakash  0:14:58
+29      Jayant Kumar    0:00:00
+29      Jaydeep Dixit   0:21:22
+29      Khushboo Priya  0:12:35
+29      Madhulika G     0:12:33
+29      Mahak   0:00:00
+29      Mahesh Sarade   0:13:06
+29      Maitry  0:16:59
+29      Maneesh         0:00:00
+29      Manjunatha A    0:10:55
+29      Mithun S        0:07:36
+29      Mukesh  0:00:00
+29      Mukesh Rao      0:00:00
+29      Muskan Garg     0:00:00
+29      Nandani Gupta   0:18:31
+29      Nishtha Jain    0:08:36
+29      Nitin M 0:00:00
+29      Prabir Kumar Satapathy  0:07:39
+29      Prateek _iot    0:09:33
+29      Prerna Singh    0:14:43
+29      Rishav Dash     0:10:02
+29      Rohan   0:00:00
+29      Saif Khan       0:00:00
+29      Saikumarreddy N 0:09:33
+29      Samprit         0:00:00
+29      Sandipan Saha   0:00:00
+29      Sanjeev Kumar   0:13:58
+29      Sanjeevan       0:00:00
+29      Saurabh Shukla  0:00:00
+29      Shiva Srivastava        0:01:48
+29      Shivan K        0:13:26
+29      Shivan_S        0:00:00
+29      Shivananda Sonwane      0:20:30
+29      Shubham Sharma  0:15:23
+29      Sowmiya Sivakumar       0:11:14
+29      Spuri   0:00:00
+29      Sudhanshu Kumar 0:00:00
+29      Suraj S Bilgi   0:00:00
+29      Swati   0:07:49
+29      Tarun   0:00:00
+29      Uday Mishra     0:00:00
+29      Vasanth P       0:00:00
+29      Vivek   0:00:00
+29      Wasim   0:16:25
+29      Zeeshan         0:13:14
+30      Abhishek        0:00:00
+30      Aditya  0:00:00
+30      Aditya Shinde   0:00:00
+30      Aditya_iot      0:12:18
+30      Amersh  0:00:00
+30      Ameya Jain      0:07:59
+30      Anirudh         0:00:00
+30      Ankit Sharma    0:00:00
+30      Ankitjha        0:00:58
+30      Anurag Tiwari   0:00:00
+30      Aravind         0:00:00
+30      Ashad Nasim     0:00:00
+30      Ashish  0:00:00
+30      Ayushi Mishra   0:15:20
+30      Bharath         0:16:44
+30      Boktiar Ahmed Bappy     0:17:41
+30      Chaitra K Hiremath      0:06:35
+30      Deepranjan Gupta        0:19:08
+30      Dibyanshu       0:00:00
+30      Harikrishnan Shaji      0:13:54
+30      Hitesh Choudhary        0:00:00
+30      Hrisikesh Neogi 0:17:22
+30      Hyder Abbas     0:00:00
+30      Ineuron Intelligence    0:00:00
+30      Ishawant Kumar  0:19:05
+30      Jawala Prakash  0:15:47
+30      Jayant Kumar    0:00:00
+30      Jaydeep Dixit   0:15:01
+30      Khushboo Priya  0:13:20
+30      Madhulika G     0:20:24
+30      Mahak   0:00:00
+30      Mahesh Sarade   0:11:28
+30      Maitry  0:09:07
+30      Maneesh         0:00:00
+30      Manjunatha A    0:20:51
+30      Mithun S        0:09:12
+30      Mukesh  0:06:19
+30      Mukesh Rao      0:00:00
+30      Muskan Garg     0:09:36
+30      Nandani Gupta   0:21:05
+30      Nishtha Jain    0:09:50
+30      Nitin M 0:00:00
+30      Prabir Kumar Satapathy  0:04:56
+30      Prateek _iot    0:09:46
+30      Prerna Singh    0:16:58
+30      Rishav Dash     0:09:06
+30      Rohan   0:00:00
+30      Saif Khan       0:00:00
+30      Saikumarreddy N 0:10:07
+30      Samprit         0:00:00
+30      Sandipan Saha   0:00:00
+30      Sanjeev Kumar   0:19:05
+30      Sanjeevan       0:00:00
+30      Saurabh Shukla  0:00:00
+30      Shiva Srivastava        0:05:18
+30      Shivan K        0:12:03
+30      Shivan_S        0:00:00
+30      Shivananda Sonwane      0:23:33
+30      Shubham Sharma  0:18:02
+30      Sowmiya Sivakumar       0:16:39
+30      Spuri   0:00:00
+30      Sudhanshu Kumar 0:00:00
+30      Suraj S Bilgi   0:13:08
+30      Swati   0:06:11
+30      Tarun   0:00:00
+30      Uday Mishra     0:00:00
+30      Vasanth P       0:00:00
+30      Vivek   0:00:00
+30      Wasim   0:17:34
+30      Zeeshan         0:12:53
+Time taken: 27.734 seconds, Fetched: 350 row(s)
+
+14. Find the number of chat on which they have received a feedback 
+
+hive> select agent,count(*) as chats
+    > from agent_perf_orc1
+    > where total_feedback>0 and total_chats>0
+    > group by agent
+    > order by chats;
+Query ID = abc_20230221140516_1eb234cb-9139-4c48-918f-351e32aa26af
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676967899201_0004, Tracking URL = http://83b6c1cd4298:8088/proxy/application_1676967899201_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676967899201_0004
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 14:05:31,764 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 14:05:45,469 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 17.97 sec
+2023-02-21 14:05:53,807 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 23.15 sec
+MapReduce Total cumulative CPU time: 23 seconds 150 msec
+Ended Job = job_1676967899201_0004
+Launching Job 2 out of 2
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676967899201_0005, Tracking URL = http://83b6c1cd4298:8088/proxy/application_1676967899201_0005/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676967899201_0005
+Hadoop job information for Stage-2: number of mappers: 1; number of reducers: 1
+2023-02-21 14:06:12,380 Stage-2 map = 0%,  reduce = 0%
+2023-02-21 14:06:23,905 Stage-2 map = 100%,  reduce = 0%, Cumulative CPU 4.13 sec
+2023-02-21 14:06:32,293 Stage-2 map = 100%,  reduce = 100%, Cumulative CPU 9.46 sec
+MapReduce Total cumulative CPU time: 9 seconds 460 msec
+Ended Job = job_1676967899201_0005
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 23.15 sec   HDFS Read: 28030 HDFS Write: 1734 SUCCESS
+Stage-Stage-2: Map: 1  Reduce: 1   Cumulative CPU: 9.46 sec   HDFS Read: 9132 HDFS Write: 1546 SUCCESS
+Total MapReduce CPU Time Spent: 32 seconds 610 msec
+OK
+Shivan_S        1
+Tarun   1
+Mahak   1
+Anurag Tiwari   2
+Maneesh         2
+Suraj S Bilgi   2
+Sudhanshu Kumar 2
+Ashad Nasim     2
+Mukesh  2
+Ankitjha        2
+Mukesh Rao      3
+Sandipan Saha   3
+Saurabh Shukla  4
+Muskan Garg     5
+Vivek   5
+Anirudh         6
+Chaitra K Hiremath      6
+Shiva Srivastava        7
+Jayant Kumar    8
+Sowmiya Sivakumar       9
+Aditya Shinde   12
+Saikumarreddy N 13
+Aravind         14
+Ameya Jain      15
+Zeeshan         16
+Wasim   16
+Prateek _iot    16
+Prabir Kumar Satapathy  17
+Aditya_iot      17
+Swati   17
+Mahesh Sarade   18
+Mithun S        18
+Harikrishnan Shaji      19
+Bharath         19
+Deepranjan Gupta        20
+Maitry  20
+Rishav Dash     20
+Shivan K        20
+Hrisikesh Neogi 21
+Jaydeep Dixit   21
+Nandani Gupta   21
+Shubham Sharma  21
+Prerna Singh    22
+Sanjeev Kumar   23
+Nishtha Jain    23
+Madhulika G     24
+Ayushi Mishra   24
+Manjunatha A    24
+Ishawant Kumar  24
+Boktiar Ahmed Bappy     25
+Jawala Prakash  25
+Khushboo Priya  25
+Shivananda Sonwane      28
+Time taken: 79.44 seconds, Fetched: 53 row(s)
+
+15. Total contribution hour for each and every agents weekly basis 
+
+hive> with cte as 
+    > (select weekofyear(login_date) as week,agent,sum(duration) over (partition by weekofyear(login_date),agent) as total_duration_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_log_orc)
+    > select week,agent,from_unixtime(unix_timestamp(cast(cast (total_duration_per_week  as int)as string), 'ss'), 'H:mm:ss') as total_duration_per_week_per_agent
+    > from cte
+    > where nth=1;
+Query ID = abc_20230221125830_c9dc223d-f03c-4aab-b7c9-9667ce81bb09
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676963565650_0003, Tracking URL = http://dcae57f054b2:8088/proxy/application_1676963565650_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676963565650_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 12:58:45,742 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 12:58:58,276 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 15.57 sec
+2023-02-21 12:59:08,709 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 24.46 sec
+MapReduce Total cumulative CPU time: 24 seconds 460 msec
+Ended Job = job_1676963565650_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 24.46 sec   HDFS Read: 24225 HDFS Write: 3350 SUCCESS
+Total MapReduce CPU Time Spent: 24 seconds 460 msec
+OK
+week    agent   total_duration_per_week_per_agent
+26      Tarun   10:08:20
+29      Aditya_iot      6:05:43
+29      Ameya Jain      0:04:59
+29      Anurag Tiwari   0:15:52
+29      Aravind 0:14:08
+29      Ayushi Mishra   17:47:25
+29      Bharath 0:04:15
+29      Boktiar Ahmed Bappy     17:45:01
+29      Chaitra K Hiremath      2:14:05
+29      Deepranjan Gupta        0:59:47
+29      Dibyanshu       3:44:38
+29      Harikrishnan Shaji      21:26:18
+29      Hrisikesh Neogi 2:53:29
+29      Hyder Abbas     0:20:10
+29      Ineuron Intelligence    1:26:55
+29      Ishawant Kumar  1:43:15
+29      Jawala Prakash  0:20:24
+29      Jaydeep Dixit   17:54:52
+29      Khushboo Priya  21:42:57
+29      Madhulika G     1:51:03
+29      Mahesh Sarade   1:28:59
+29      Maitry  0:39:28
+29      Manjunatha A    18:21:04
+29      Mithun S        17:22:47
+29      Muskan Garg     3:19:07
+29      Nandani Gupta   17:20:02
+29      Nishtha Jain    22:06:57
+29      Nitin M 0:47:56
+29      Prabir Kumar Satapathy  17:31:28
+29      Prateek _iot    7:16:11
+29      Prerna Singh    18:31:03
+29      Rishav Dash     18:53:38
+29      Saikumarreddy N 0:58:50
+29      Sanjeev Kumar   19:21:39
+29      Saurabh Shukla  16:39:47
+29      Shiva Srivastava        1:54:22
+29      Shivan K        16:42:50
+29      Shivananda Sonwane      20:50:03
+29      Shubham Sharma  6:30:37
+29      Sowmiya Sivakumar       17:03:57
+29      Sudhanshu Kumar 0:27:17
+29      Swati   18:51:31
+29      Wasim   19:37:32
+29      Zeeshan 0:25:39
+30      Aditya Shinde   0:02:10
+30      Aditya_iot      9:38:09
+30      Amersh  3:03:50
+30      Ameya Jain      17:59:33
+30      Ankitjha        2:16:01
+30      Anurag Tiwari   2:30:52
+30      Aravind 0:03:49
+30      Ayushi Mishra   20:19:53
+30      Bharath 0:00:21
+30      Boktiar Ahmed Bappy     22:31:06
+30      Chaitra K Hiremath      8:05:27
+30      Deepranjan Gupta        9:16:44
+30      Dibyanshu       0:51:07
+30      Harikrishnan Shaji      8:16:35
+30      Hrisikesh Neogi 6:40:38
+30      Hyder Abbas     0:03:07
+30      Ishawant Kumar  2:03:29
+30      Jawala Prakash  22:03:44
+30      Jaydeep Dixit   17:55:34
+30      Khushboo Priya  21:50:34
+30      Madhulika G     20:12:34
+30      Mahesh Sarade   17:26:20
+30      Maitry  6:17:14
+30      Manjunatha A    22:55:25
+30      Mithun S        3:47:38
+30      Mukesh  8:54:18
+30      Muskan Garg     14:01:01
+30      Nandani Gupta   22:50:18
+30      Nishtha Jain    21:44:13
+30      Prabir Kumar Satapathy  15:51:10
+30      Prateek _iot    11:08:54
+30      Prerna Singh    3:11:53
+30      Rishav Dash     22:52:54
+30      Saikumarreddy N 18:09:25
+30      Sanjeev Kumar   1:19:35
+30      Shiva Srivastava        13:05:17
+30      Shivan K        19:23:18
+30      Shivananda Sonwane      4:27:13
+30      Shubham Sharma  23:17:17
+30      Sowmiya Sivakumar       3:41:18
+30      Sudhanshu Kumar 21:46:35
+30      Suraj S Bilgi   12:33:33
+30      Swati   6:08:33
+30      Wasim   4:33:13
+30      Zeeshan 0:39:40
+Time taken: 40.0 seconds, Fetched: 89 row(s)
+
+16. Perform inner join, left join and right join based on the agent column and after joining the table export that data into your local system.
+17. Perform partitioning on top of the agent column and then on top of that perform bucketing for each partitioning.
+
+
+
+
+
+create table agent_perf_orc1(sl_num int,login_date date ,Agent String,total_chats int,avg_resp float,avg_resolution float,avg_rating float,total_feedback int)
+stored as orc;
+
+
+
+from agent_perf_csv insert overwrite table agent_perf_orc1 select sl_num,from_unixtime(unix_timestamp(login_date,'M/dd/yyyy'),'yyyy-MM-dd'),agent,total_chats, unix_timestamp(avg_resp,'H:mm:ss'),unix_timestamp(avg_resolution,'H:mm:ss'),avg_rating,total_feedback
+
+
+
+select from_unixtime(unix_timestamp(login_date,'M/dd/yyyy'),'yyyy-MM-dd'),agent, unix_timestamp(avg_resp,'H:mm:ss'),unix_timestamp(avg_resolution,'H:mm:ss')
+
+
+create table agent_log_orc(Agent String,login_date date,duration float) stored as orc;
+
+
+from agent_log_csv insert overwrite table agent_log_orc select agent,from_unixtime(unix_timestamp(login_date,'dd-MMM-yy'),'yyyy-MM-dd'),unix_timestamp(duration,'H:mm:ss');
+
+
+
+
+
+
+with cte as (
+select weekofyear(login_date) as week,agent as agent_name,avg(avg_resp) over (partition by weekofyear(login_date) order by agent) as avg_response_time_per_week from agent_perf_orc1;
+)
+select agent_name,avg(avg_response_time_per_week)
+from cte
+group by agent_name;
+
+
+
+
+select weekofyear(login_date) as week,agent,avg(avg_resp) over (partition by weekofyear(login_date),agent) as avg_response_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1;
+
+select weekofyear(login_date),agent,avg(avg_resp) over (partition by weekofyear(login_date)) as avg_response_time_per_week from agent_perf_orc1 where agent='Zeeshan';
+
+with cte as 
+( select weekofyear(login_date) as week, agent as agent_name,avg_resolution as avgresp from agent_perf_orc1 where agent='Prabir Kumar Satapathy')
+select cte.week,avg(avgresp)
+from cte
+group by week;
+
+OK
+26      0.0
+27      60.857142857142854
+28      34.0
+29      39.857142857142854
+30      32.833333333333336
+Time taken: 25.705 seconds, Fetched: 5 row(s)
+OK
+26      Abhishek        0.0
+26      Aditya  0.0
+26      Aditya Shinde   55.333333333333336
+26      Aditya_iot      0.0
+26      Amersh  0.0
+26      Ameya Jain      0.0
+26      Anirudh         0.0
+26      Ankit Sharma    0.0
+26      Ankitjha        0.0
+26      Anurag Tiwari   0.0
+26      Aravind         0.0
+26      Ashad Nasim     0.0
+26      Ashish  0.0
+26      Ayushi Mishra   57.0
+26      Bharath         28.0
+26      Boktiar Ahmed Bappy     60.333333333333336
+26      Chaitra K Hiremath      0.0
+26      Deepranjan Gupta        44.666666666666664
+26      Dibyanshu       0.0
+26      Harikrishnan Shaji      0.0
+26      Hitesh Choudhary        0.0
+26      Hrisikesh Neogi 37.666666666666664
+26      Hyder Abbas     0.0
+26      Ineuron Intelligence    0.0
+26      Ishawant Kumar  0.0
+26      Jawala Prakash  55.666666666666664
+26      Jayant Kumar    63.0
+26      Jaydeep Dixit   39.666666666666664
+26      Khushboo Priya  80.0
+26      Madhulika G     94.0
+26      Mahak   0.0
+26      Mahesh Sarade   0.0
+26      Maitry  41.666666666666664
+26      Maneesh         0.0
+26      Manjunatha A    42.0
+26      Mithun S        0.0
+26      Mukesh  0.0
+26      Mukesh Rao      0.0
+26      Muskan Garg     0.0
+26      Nandani Gupta   108.33333333333333
+26      Nishtha Jain    0.0
+26      Nitin M 0.0
+26      Prabir Kumar Satapathy  0.0
+26      Prateek _iot    0.0
+26      Prerna Singh    64.66666666666667
+26      Rishav Dash     45.0
+26      Rohan   0.0
+26      Saif Khan       0.0
+26      Saikumarreddy N 0.0
+26      Samprit         0.0
+26      Sandipan Saha   0.0
+26      Sanjeev Kumar   76.0
+26      Sanjeevan       0.0
+26      Saurabh Shukla  7.0
+26      Shiva Srivastava        0.0
+26      Shivan K        56.0
+26      Shivan_S        0.0
+26      Shivananda Sonwane      77.0
+26      Shubham Sharma  54.333333333333336
+26      Sowmiya Sivakumar       0.0
+26      Spuri   0.0
+26      Sudhanshu Kumar 0.0
+26      Suraj S Bilgi   0.0
+26      Swati   107.0
+26      Tarun   0.0
+26      Uday Mishra     0.0
+26      Vasanth P       0.0
+26      Vivek   0.0
+26      Wasim   0.0
+26      Zeeshan         0.0
+27      Abhishek        0.0
+27      Aditya  0.0
+27      Aditya Shinde   47.285714285714285
+27      Aditya_iot      20.142857142857142
+27      Amersh  0.0
+27      Ameya Jain      0.0
+27      Anirudh         77.42857142857143
+27      Ankit Sharma    0.0
+27      Ankitjha        0.0
+27      Anurag Tiwari   36.142857142857146
+27      Aravind         21.0
+27      Ashad Nasim     165.57142857142858
+27      Ashish  0.0
+27      Ayushi Mishra   50.142857142857146
+27      Bharath         24.285714285714285
+27      Boktiar Ahmed Bappy     42.857142857142854
+27      Chaitra K Hiremath      0.0
+27      Deepranjan Gupta        59.42857142857143
+27      Dibyanshu       5.428571428571429
+27      Harikrishnan Shaji      27.857142857142858
+27      Hitesh Choudhary        0.0
+27      Hrisikesh Neogi 46.142857142857146
+27      Hyder Abbas     0.0
+27      Ineuron Intelligence    0.0
+27      Ishawant Kumar  39.714285714285715
+27      Jawala Prakash  110.14285714285714
+27      Jayant Kumar    39.285714285714285
+27      Jaydeep Dixit   51.42857142857143
+27      Khushboo Priya  70.71428571428571
+27      Madhulika G     60.285714285714285
+27      Mahak   0.0
+27      Mahesh Sarade   38.57142857142857
+27      Maitry  48.42857142857143
+27      Maneesh         19.285714285714285
+27      Manjunatha A    42.285714285714285
+27      Mithun S        2.7142857142857144
+27      Mukesh  0.0
+27      Mukesh Rao      56.285714285714285
+27      Muskan Garg     0.0
+27      Nandani Gupta   57.857142857142854
+27      Nishtha Jain    72.28571428571429
+27      Nitin M 0.0
+27      Prabir Kumar Satapathy  60.857142857142854
+27      Prateek _iot    9.428571428571429
+27      Prerna Singh    49.285714285714285
+27      Rishav Dash     30.071428571428573
+27      Rohan   0.0
+27      Saif Khan       0.0
+27      Saikumarreddy N 0.0
+27      Samprit         0.0
+27      Sandipan Saha   0.0
+27      Sanjeev Kumar   39.0
+27      Sanjeevan       0.0
+27      Saurabh Shukla  10.0
+27      Shiva Srivastava        0.0
+27      Shivan K        52.857142857142854
+27      Shivan_S        10.428571428571429
+27      Shivananda Sonwane      52.57142857142857
+27      Shubham Sharma  41.57142857142857
+27      Sowmiya Sivakumar       0.0
+27      Spuri   0.0
+27      Sudhanshu Kumar 6.857142857142857
+27      Suraj S Bilgi   0.0
+27      Swati   69.57142857142857
+27      Tarun   0.0
+27      Uday Mishra     0.0
+27      Vasanth P       0.0
+27      Vivek   15.285714285714286
+27      Wasim   8.0
+27      Zeeshan         23.571428571428573
+28      Abhishek        0.0
+28      Aditya  0.0
+28      Aditya Shinde   56.42857142857143
+28      Aditya_iot      52.0
+28      Amersh  0.0
+28      Ameya Jain      32.57142857142857
+28      Anirudh         15.857142857142858
+28      Ankit Sharma    0.0
+28      Ankitjha        0.0
+28      Anurag Tiwari   0.0
+28      Aravind         34.142857142857146
+28      Ashad Nasim     0.0
+28      Ashish  0.0
+28      Ayushi Mishra   48.285714285714285
+28      Bharath         14.0
+28      Boktiar Ahmed Bappy     59.0
+28      Chaitra K Hiremath      0.0
+28      Deepranjan Gupta        44.0
+28      Dibyanshu       0.0
+28      Harikrishnan Shaji      39.42857142857143
+28      Hitesh Choudhary        0.0
+28      Hrisikesh Neogi 45.285714285714285
+28      Hyder Abbas     0.0
+28      Ineuron Intelligence    0.0
+28      Ishawant Kumar  65.28571428571429
+28      Jawala Prakash  116.28571428571429
+28      Jayant Kumar    12.714285714285714
+28      Jaydeep Dixit   46.857142857142854
+28      Khushboo Priya  58.42857142857143
+28      Madhulika G     81.28571428571429
+28      Mahak   0.0
+28      Mahesh Sarade   55.42857142857143
+28      Maitry  74.14285714285714
+28      Maneesh         0.0
+28      Manjunatha A    33.285714285714285
+28      Mithun S        43.857142857142854
+28      Mukesh  0.0
+28      Mukesh Rao      0.0
+28      Muskan Garg     0.0
+28      Nandani Gupta   50.714285714285715
+28      Nishtha Jain    60.714285714285715
+28      Nitin M 0.0
+28      Prabir Kumar Satapathy  34.0
+28      Prateek _iot    21.857142857142858
+28      Prerna Singh    41.857142857142854
+28      Rishav Dash     23.857142857142858
+28      Rohan   0.0
+28      Saif Khan       0.0
+28      Saikumarreddy N 22.142857142857142
+28      Samprit         0.0
+28      Sandipan Saha   25.285714285714285
+28      Sanjeev Kumar   70.14285714285714
+28      Sanjeevan       0.0
+28      Saurabh Shukla  2.0
+28      Shiva Srivastava        0.0
+28      Shivan K        29.0
+28      Shivan_S        0.0
+28      Shivananda Sonwane      49.142857142857146
+28      Shubham Sharma  36.857142857142854
+28      Sowmiya Sivakumar       0.0
+28      Spuri   0.0
+28      Sudhanshu Kumar 10.285714285714286
+28      Suraj S Bilgi   0.0
+28      Swati   77.14285714285714
+28      Tarun   0.0
+28      Uday Mishra     0.0
+28      Vasanth P       0.0
+28      Vivek   43.42857142857143
+28      Wasim   29.857142857142858
+28      Zeeshan         123.42857142857143
+29      Abhishek        0.0
+29      Aditya  0.0
+29      Aditya Shinde   0.0
+29      Aditya_iot      30.142857142857142
+29      Amersh  0.0
+29      Ameya Jain      29.714285714285715
+29      Anirudh         0.0
+29      Ankit Sharma    0.0
+29      Ankitjha        0.0
+29      Anurag Tiwari   0.0
+29      Aravind         36.42857142857143
+29      Ashad Nasim     0.0
+29      Ashish  0.0
+29      Ayushi Mishra   85.28571428571429
+29      Bharath         45.0
+29      Boktiar Ahmed Bappy     66.85714285714286
+29      Chaitra K Hiremath      32.714285714285715
+29      Deepranjan Gupta        46.285714285714285
+29      Dibyanshu       0.0
+29      Harikrishnan Shaji      48.42857142857143
+29      Hitesh Choudhary        0.0
+29      Hrisikesh Neogi 58.0
+29      Hyder Abbas     0.0
+29      Ineuron Intelligence    0.0
+29      Ishawant Kumar  62.714285714285715
+29      Jawala Prakash  73.85714285714286
+29      Jayant Kumar    0.0
+29      Jaydeep Dixit   43.285714285714285
+29      Khushboo Priya  51.142857142857146
+29      Madhulika G     49.57142857142857
+29      Mahak   0.0
+29      Mahesh Sarade   59.0
+29      Maitry  70.85714285714286
+29      Maneesh         0.0
+29      Manjunatha A    32.57142857142857
+29      Mithun S        44.142857142857146
+29      Mukesh  0.0
+29      Mukesh Rao      0.0
+29      Muskan Garg     0.0
+29      Nandani Gupta   57.57142857142857
+29      Nishtha Jain    88.57142857142857
+29      Nitin M 0.0
+29      Prabir Kumar Satapathy  39.857142857142854
+29      Prateek _iot    32.714285714285715
+29      Prerna Singh    43.42857142857143
+29      Rishav Dash     25.928571428571427
+29      Rohan   0.0
+29      Saif Khan       0.0
+29      Saikumarreddy N 51.0
+29      Samprit         0.0
+29      Sandipan Saha   0.0
+29      Sanjeev Kumar   41.142857142857146
+29      Sanjeevan       0.0
+29      Saurabh Shukla  0.0
+29      Shiva Srivastava        23.857142857142858
+29      Shivan K        67.28571428571429
+29      Shivan_S        0.0
+29      Shivananda Sonwane      59.57142857142857
+29      Shubham Sharma  51.142857142857146
+29      Sowmiya Sivakumar       60.42857142857143
+29      Spuri   0.0
+29      Sudhanshu Kumar 0.0
+29      Suraj S Bilgi   0.0
+29      Swati   30.285714285714285
+29      Tarun   0.0
+29      Uday Mishra     0.0
+29      Vasanth P       0.0
+29      Vivek   0.0
+29      Wasim   46.142857142857146
+29      Zeeshan         62.857142857142854
+30      Abhishek        0.0
+30      Aditya  0.0
+30      Aditya Shinde   0.0
+30      Aditya_iot      50.5
+30      Amersh  0.0
+30      Ameya Jain      33.0
+30      Anirudh         0.0
+30      Ankit Sharma    0.0
+30      Ankitjha        22.166666666666668
+30      Anurag Tiwari   0.0
+30      Aravind         0.0
+30      Ashad Nasim     0.0
+30      Ashish  0.0
+30      Ayushi Mishra   58.833333333333336
+30      Bharath         22.833333333333332
+30      Boktiar Ahmed Bappy     103.16666666666667
+30      Chaitra K Hiremath      37.5
+30      Deepranjan Gupta        69.0
+30      Dibyanshu       0.0
+30      Harikrishnan Shaji      34.833333333333336
+30      Hitesh Choudhary        0.0
+30      Hrisikesh Neogi 59.333333333333336
+30      Hyder Abbas     0.0
+30      Ineuron Intelligence    0.0
+30      Ishawant Kumar  55.0
+30      Jawala Prakash  93.0
+30      Jayant Kumar    0.0
+30      Jaydeep Dixit   37.0
+30      Khushboo Priya  56.166666666666664
+30      Madhulika G     62.166666666666664
+30      Mahak   0.0
+30      Mahesh Sarade   53.666666666666664
+30      Maitry  72.66666666666667
+30      Maneesh         0.0
+30      Manjunatha A    33.666666666666664
+30      Mithun S        38.833333333333336
+30      Mukesh  16.666666666666668
+30      Mukesh Rao      0.0
+30      Muskan Garg     29.666666666666668
+30      Nandani Gupta   51.333333333333336
+30      Nishtha Jain    45.5
+30      Nitin M 0.0
+30      Prabir Kumar Satapathy  32.833333333333336
+30      Prateek _iot    37.833333333333336
+30      Prerna Singh    49.0
+30      Rishav Dash     35.916666666666664
+30      Rohan   0.0
+30      Saif Khan       0.0
+30      Saikumarreddy N 40.5
+30      Samprit         0.0
+30      Sandipan Saha   0.0
+30      Sanjeev Kumar   42.666666666666664
+30      Sanjeevan       0.0
+30      Saurabh Shukla  0.0
+30      Shiva Srivastava        22.166666666666668
+30      Shivan K        37.5
+30      Shivan_S        0.0
+30      Shivananda Sonwane      53.333333333333336
+30      Shubham Sharma  63.333333333333336
+30      Sowmiya Sivakumar       60.333333333333336
+30      Spuri   0.0
+30      Sudhanshu Kumar 0.0
+30      Suraj S Bilgi   30.333333333333332
+30      Swati   29.0
+30      Tarun   0.0
+30      Uday Mishra     0.0
+30      Vasanth P       0.0
+30      Vivek   0.0
+30      Wasim   50.5
+30      Zeeshan         63.833333333333336
+
+with cte as 
+(select weekofyear(login_date) as week,agent,avg(avg_resp) over (partition by weekofyear(login_date),agent) as avg_response_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+select week,agent,from_unixtime(unix_timestamp(cast(cast (avg_response_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+from cte
+where nth=1;
+
+
+
+hive> with cte as 
+    > (select weekofyear(login_date) as week,agent,avg(avg_resolution) over (partition by weekofyear(login_date),agent) as avg_resolution_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+    > select week,agent,avg_resolution_time_per_week
+    > from cte
+    > where nth=1;
+Query ID = abc_20230220225623_97be2d38-0d55-4339-85a2-79f2851da8d8
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676913560308_0004, Tracking URL = http://6a2f6b13f605:8088/proxy/application_1676913560308_0004/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676913560308_0004
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-20 22:56:32,141 Stage-1 map = 0%,  reduce = 0%
+2023-02-20 22:56:40,331 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 13.44 sec
+2023-02-20 22:56:46,462 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 17.54 sec
+MapReduce Total cumulative CPU time: 17 seconds 540 msec
+Ended Job = job_1676913560308_0004
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 17.54 sec   HDFS Read: 30284 HDFS Write: 13082 SUCCESS
+Total MapReduce CPU Time Spent: 17 seconds 540 msec
+OK
+26      Abhishek        0.0
+26      Aditya  0.0
+26      Aditya Shinde   927.0
+26      Aditya_iot      0.0
+26      Amersh  0.0
+26      Ameya Jain      0.0
+26      Anirudh         0.0
+26      Ankit Sharma    0.0
+26      Ankitjha        0.0
+26      Anurag Tiwari   0.0
+26      Aravind         0.0
+26      Ashad Nasim     0.0
+26      Ashish  0.0
+26      Ayushi Mishra   1021.6666666666666
+26      Bharath         388.3333333333333
+26      Boktiar Ahmed Bappy     900.3333333333334
+26      Chaitra K Hiremath      0.0
+26      Deepranjan Gupta        1208.0
+26      Dibyanshu       0.0
+26      Harikrishnan Shaji      0.0
+26      Hitesh Choudhary        0.0
+26      Hrisikesh Neogi 805.3333333333334
+26      Hyder Abbas     0.0
+26      Ineuron Intelligence    0.0
+26      Ishawant Kumar  0.0
+26      Jawala Prakash  657.0
+26      Jayant Kumar    763.6666666666666
+26      Jaydeep Dixit   786.0
+26      Khushboo Priya  1106.0
+26      Madhulika G     775.0
+26      Mahak   0.0
+26      Mahesh Sarade   0.0
+26      Maitry  659.3333333333334
+26      Maneesh         0.0
+26      Manjunatha A    1070.0
+26      Mithun S        0.0
+26      Mukesh  0.0
+26      Mukesh Rao      0.0
+26      Muskan Garg     0.0
+26      Nandani Gupta   1050.3333333333333
+26      Nishtha Jain    0.0
+26      Nitin M 0.0
+26      Prabir Kumar Satapathy  0.0
+26      Prateek _iot    0.0
+26      Prerna Singh    618.6666666666666
+26      Rishav Dash     569.6666666666666
+26      Rohan   0.0
+26      Saif Khan       0.0
+26      Saikumarreddy N 0.0
+26      Samprit         0.0
+26      Sandipan Saha   0.0
+26      Sanjeev Kumar   1240.0
+26      Sanjeevan       0.0
+26      Saurabh Shukla  211.66666666666666
+26      Shiva Srivastava        0.0
+26      Shivan K        1835.0
+26      Shivan_S        0.0
+26      Shivananda Sonwane      1334.0
+26      Shubham Sharma  984.3333333333334
+26      Sowmiya Sivakumar       0.0
+26      Spuri   0.0
+26      Sudhanshu Kumar 0.0
+26      Suraj S Bilgi   0.0
+26      Swati   1059.3333333333333
+26      Tarun   904.6666666666666
+26      Uday Mishra     0.0
+26      Vasanth P       0.0
+26      Vivek   0.0
+26      Wasim   0.0
+26      Zeeshan         0.0
+27      Abhishek        0.0
+27      Aditya  0.0
+27      Aditya Shinde   903.8571428571429
+27      Aditya_iot      309.85714285714283
+27      Amersh  0.0
+27      Ameya Jain      15.285714285714286
+27      Anirudh         487.85714285714283
+27      Ankit Sharma    0.0
+27      Ankitjha        183.14285714285714
+27      Anurag Tiwari   316.85714285714283
+27      Aravind         622.2857142857143
+27      Ashad Nasim     89.71428571428571
+27      Ashish  0.0
+27      Ayushi Mishra   743.0
+27      Bharath         741.7142857142857
+27      Boktiar Ahmed Bappy     1988.7142857142858
+27      Chaitra K Hiremath      0.0
+27      Deepranjan Gupta        1548.2857142857142
+27      Dibyanshu       105.71428571428571
+27      Harikrishnan Shaji      359.7142857142857
+27      Hitesh Choudhary        0.0
+27      Hrisikesh Neogi 853.2857142857143
+27      Hyder Abbas     0.0
+27      Ineuron Intelligence    0.0
+27      Ishawant Kumar  851.8571428571429
+27      Jawala Prakash  477.57142857142856
+27      Jayant Kumar    840.1428571428571
+27      Jaydeep Dixit   1090.2857142857142
+27      Khushboo Priya  1435.5714285714287
+27      Madhulika G     873.8571428571429
+27      Mahak   172.0
+27      Mahesh Sarade   362.57142857142856
+27      Maitry  679.5714285714286
+27      Maneesh         178.57142857142858
+27      Manjunatha A    1205.142857142857
+27      Mithun S        209.14285714285714
+27      Mukesh  0.0
+27      Mukesh Rao      1973.857142857143
+27      Muskan Garg     0.0
+27      Nandani Gupta   1002.0
+27      Nishtha Jain    712.2857142857143
+27      Nitin M 0.0
+27      Prabir Kumar Satapathy  314.0
+27      Prateek _iot    317.0
+27      Prerna Singh    821.7142857142857
+27      Rishav Dash     465.14285714285717
+27      Rohan   0.0
+27      Saif Khan       0.0
+27      Saikumarreddy N 0.0
+27      Samprit         14.714285714285714
+27      Sandipan Saha   0.0
+27      Sanjeev Kumar   902.1428571428571
+27      Sanjeevan       0.0
+27      Saurabh Shukla  157.85714285714286
+27      Shiva Srivastava        0.0
+27      Shivan K        1158.4285714285713
+27      Shivan_S        157.42857142857142
+27      Shivananda Sonwane      1253.5714285714287
+27      Shubham Sharma  1178.4285714285713
+27      Sowmiya Sivakumar       0.0
+27      Spuri   0.0
+27      Sudhanshu Kumar 152.85714285714286
+27      Suraj S Bilgi   0.0
+27      Swati   883.2857142857143
+27      Tarun   0.0
+27      Uday Mishra     0.0
+27      Vasanth P       0.0
+27      Vivek   145.0
+27      Wasim   196.14285714285714
+27      Zeeshan         323.0
+28      Abhishek        0.0
+28      Aditya  0.0
+28      Aditya Shinde   1358.7142857142858
+28      Aditya_iot      911.0
+28      Amersh  0.0
+28      Ameya Jain      483.7142857142857
+28      Anirudh         307.0
+28      Ankit Sharma    0.0
+28      Ankitjha        0.0
+28      Anurag Tiwari   0.0
+28      Aravind         865.4285714285714
+28      Ashad Nasim     0.0
+28      Ashish  0.0
+28      Ayushi Mishra   876.7142857142857
+28      Bharath         441.57142857142856
+28      Boktiar Ahmed Bappy     408.14285714285717
+28      Chaitra K Hiremath      0.0
+28      Deepranjan Gupta        992.0
+28      Dibyanshu       0.0
+28      Harikrishnan Shaji      762.2857142857143
+28      Hitesh Choudhary        12.142857142857142
+28      Hrisikesh Neogi 747.1428571428571
+28      Hyder Abbas     0.0
+28      Ineuron Intelligence    0.0
+28      Ishawant Kumar  794.7142857142857
+28      Jawala Prakash  874.5714285714286
+28      Jayant Kumar    96.57142857142857
+28      Jaydeep Dixit   1151.0
+28      Khushboo Priya  954.0
+28      Madhulika G     987.7142857142857
+28      Mahak   0.0
+28      Mahesh Sarade   615.8571428571429
+28      Maitry  837.4285714285714
+28      Maneesh         0.0
+28      Manjunatha A    969.1428571428571
+28      Mithun S        347.42857142857144
+28      Mukesh  0.0
+28      Mukesh Rao      0.0
+28      Muskan Garg     0.0
+28      Nandani Gupta   1021.7142857142857
+28      Nishtha Jain    658.0
+28      Nitin M 0.0
+28      Prabir Kumar Satapathy  500.42857142857144
+28      Prateek _iot    690.8571428571429
+28      Prerna Singh    1405.7142857142858
+28      Rishav Dash     403.57142857142856
+28      Rohan   0.0
+28      Saif Khan       0.0
+28      Saikumarreddy N 506.14285714285717
+28      Samprit         0.0
+28      Sandipan Saha   676.4285714285714
+28      Sanjeev Kumar   1167.5714285714287
+28      Sanjeevan       0.0
+28      Saurabh Shukla  57.42857142857143
+28      Shiva Srivastava        0.0
+28      Shivan K        707.0
+28      Shivan_S        0.0
+28      Shivananda Sonwane      1170.142857142857
+28      Shubham Sharma  1019.1428571428571
+28      Sowmiya Sivakumar       0.0
+28      Spuri   0.0
+28      Sudhanshu Kumar 348.42857142857144
+28      Suraj S Bilgi   0.0
+28      Swati   1031.7142857142858
+28      Tarun   0.0
+28      Uday Mishra     0.0
+28      Vasanth P       0.0
+28      Vivek   509.7142857142857
+28      Wasim   867.0
+28      Zeeshan         984.2857142857143
+29      Abhishek        0.0
+29      Aditya  0.0
+29      Aditya Shinde   0.0
+29      Aditya_iot      672.1428571428571
+29      Amersh  0.0
+29      Ameya Jain      497.85714285714283
+29      Anirudh         0.0
+29      Ankit Sharma    0.0
+29      Ankitjha        0.0
+29      Anurag Tiwari   0.0
+29      Aravind         807.5714285714286
+29      Ashad Nasim     0.0
+29      Ashish  0.0
+29      Ayushi Mishra   1107.4285714285713
+29      Bharath         564.7142857142857
+29      Boktiar Ahmed Bappy     695.7142857142857
+29      Chaitra K Hiremath      42.714285714285715
+29      Deepranjan Gupta        1320.0
+29      Dibyanshu       0.0
+29      Harikrishnan Shaji      1070.7142857142858
+29      Hitesh Choudhary        0.0
+29      Hrisikesh Neogi 1130.4285714285713
+29      Hyder Abbas     0.0
+29      Ineuron Intelligence    0.0
+29      Ishawant Kumar  1079.4285714285713
+29      Jawala Prakash  898.8571428571429
+29      Jayant Kumar    0.0
+29      Jaydeep Dixit   1282.0
+29      Khushboo Priya  755.0
+29      Madhulika G     753.7142857142857
+29      Mahak   0.0
+29      Mahesh Sarade   786.2857142857143
+29      Maitry  1019.0
+29      Maneesh         0.0
+29      Manjunatha A    655.1428571428571
+29      Mithun S        456.0
+29      Mukesh  0.0
+29      Mukesh Rao      0.0
+29      Muskan Garg     0.0
+29      Nandani Gupta   1111.857142857143
+29      Nishtha Jain    516.5714285714286
+29      Nitin M 0.0
+29      Prabir Kumar Satapathy  459.57142857142856
+29      Prateek _iot    573.7142857142857
+29      Prerna Singh    883.5714285714286
+29      Rishav Dash     602.7857142857143
+29      Rohan   0.0
+29      Saif Khan       0.0
+29      Saikumarreddy N 573.4285714285714
+29      Samprit         0.0
+29      Sandipan Saha   0.0
+29      Sanjeev Kumar   838.2857142857143
+29      Sanjeevan       0.0
+29      Saurabh Shukla  0.0
+29      Shiva Srivastava        108.0
+29      Shivan K        806.1428571428571
+29      Shivan_S        0.0
+29      Shivananda Sonwane      1230.2857142857142
+29      Shubham Sharma  923.2857142857143
+29      Sowmiya Sivakumar       674.7142857142857
+29      Spuri   0.0
+29      Sudhanshu Kumar 0.0
+29      Suraj S Bilgi   0.0
+29      Swati   469.0
+29      Tarun   0.0
+29      Uday Mishra     0.0
+29      Vasanth P       0.0
+29      Vivek   0.0
+29      Wasim   985.0
+29      Zeeshan         794.2857142857143
+30      Abhishek        0.0
+30      Aditya  0.0
+30      Aditya Shinde   0.0
+30      Aditya_iot      738.0
+30      Amersh  0.0
+30      Ameya Jain      479.5
+30      Anirudh         0.0
+30      Ankit Sharma    0.0
+30      Ankitjha        58.666666666666664
+30      Anurag Tiwari   0.0
+30      Aravind         0.0
+30      Ashad Nasim     0.0
+30      Ashish  0.0
+30      Ayushi Mishra   920.5
+30      Bharath         1004.5
+30      Boktiar Ahmed Bappy     1061.0
+30      Chaitra K Hiremath      395.0
+30      Deepranjan Gupta        1148.1666666666667
+30      Dibyanshu       0.0
+30      Harikrishnan Shaji      834.0
+30      Hitesh Choudhary        0.0
+30      Hrisikesh Neogi 1042.8333333333333
+30      Hyder Abbas     0.0
+30      Ineuron Intelligence    0.0
+30      Ishawant Kumar  1145.1666666666667
+30      Jawala Prakash  947.5
+30      Jayant Kumar    0.0
+30      Jaydeep Dixit   901.8333333333334
+30      Khushboo Priya  800.5
+30      Madhulika G     1224.1666666666667
+30      Mahak   0.0
+30      Mahesh Sarade   688.6666666666666
+30      Maitry  547.0
+30      Maneesh         0.0
+30      Manjunatha A    1251.6666666666667
+30      Mithun S        552.0
+30      Mukesh  379.6666666666667
+30      Mukesh Rao      0.0
+30      Muskan Garg     576.0
+30      Nandani Gupta   1265.1666666666667
+30      Nishtha Jain    590.6666666666666
+30      Nitin M 0.0
+30      Prabir Kumar Satapathy  296.8333333333333
+30      Prateek _iot    586.0
+30      Prerna Singh    1018.1666666666666
+30      Rishav Dash     546.1666666666666
+30      Rohan   0.0
+30      Saif Khan       0.0
+30      Saikumarreddy N 607.3333333333334
+30      Samprit         0.0
+30      Sandipan Saha   0.0
+30      Sanjeev Kumar   1145.5
+30      Sanjeevan       0.0
+30      Saurabh Shukla  0.0
+30      Shiva Srivastava        318.0
+30      Shivan K        723.6666666666666
+30      Shivan_S        0.0
+30      Shivananda Sonwane      1413.0
+30      Shubham Sharma  1082.6666666666667
+30      Sowmiya Sivakumar       999.5
+30      Spuri   0.0
+30      Sudhanshu Kumar 0.0
+30      Suraj S Bilgi   788.3333333333334
+30      Swati   371.8333333333333
+30      Tarun   0.0
+30      Uday Mishra     0.0
+30      Vasanth P       0.0
+30      Vivek   0.0
+30      Wasim   1054.8333333333333
+30      Zeeshan         773.5
+Time taken: 25.305 seconds, Fetched: 350 row(s)
+
+with cte as 
+(select weekofyear(login_date) as week,agent,avg(avg_resolution) over (partition by weekofyear(login_date),agent) as avg_resolution_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+select week,agent,from_unixtime(unix_timestamp(cast(cast (avg_resolution_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+from cte
+where nth=1;
+
+cast(avg_resolution_time_per_week) as int
+(cast() as string)
+unix_timestamp(,'ss')
+(cast() as string)
+cast(avg_resolution_time_per_week) as int
+
+from_unixtime(unix_timestamp(cast(cast (avg_resolution_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+
+hive> with cte as 
+    > (select weekofyear(login_date) as week,agent,avg(avg_resolution) over (partition by weekofyear(login_date),agent) as avg_resolution_time_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_perf_orc1)
+    > select week,agent,from_unixtime(unix_timestamp(cast(cast (avg_resolution_time_per_week  as int)as string), 'ss'), 'H:mm:ss') as avg_re_time_per_agnet
+    > from cte
+    > where nth=1;
+Query ID = abc_20230221120839_857642ef-2ccd-4eba-af7c-dbb9c1de9809
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1676961273130_0002, Tracking URL = http://65d2410592ad:8088/proxy/application_1676961273130_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1676961273130_0002
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-02-21 12:08:51,218 Stage-1 map = 0%,  reduce = 0%
+2023-02-21 12:08:59,418 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 14.77 sec
+2023-02-21 12:09:05,582 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 19.18 sec
+MapReduce Total cumulative CPU time: 19 seconds 180 msec
+Ended Job = job_1676961273130_0002
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 19.18 sec   HDFS Read: 30458 HDFS Write: 12472 SUCCESS
+Total MapReduce CPU Time Spent: 19 seconds 180 msec
+OK
+week    agent   avg_re_time_per_agnet
+26      Abhishek        0:00:00
+26      Aditya  0:00:00
+26      Aditya Shinde   0:15:27
+26      Aditya_iot      0:00:00
+26      Amersh  0:00:00
+26      Ameya Jain      0:00:00
+26      Anirudh         0:00:00
+26      Ankit Sharma    0:00:00
+26      Ankitjha        0:00:00
+26      Anurag Tiwari   0:00:00
+26      Aravind         0:00:00
+26      Ashad Nasim     0:00:00
+26      Ashish  0:00:00
+26      Ayushi Mishra   0:17:01
+26      Bharath         0:06:28
+26      Boktiar Ahmed Bappy     0:15:00
+26      Chaitra K Hiremath      0:00:00
+26      Deepranjan Gupta        0:20:08
+26      Dibyanshu       0:00:00
+26      Harikrishnan Shaji      0:00:00
+26      Hitesh Choudhary        0:00:00
+26      Hrisikesh Neogi 0:13:25
+26      Hyder Abbas     0:00:00
+26      Ineuron Intelligence    0:00:00
+26      Ishawant Kumar  0:00:00
+26      Jawala Prakash  0:10:57
+26      Jayant Kumar    0:12:43
+26      Jaydeep Dixit   0:13:06
+26      Khushboo Priya  0:18:26
+26      Madhulika G     0:12:55
+26      Mahak   0:00:00
+26      Mahesh Sarade   0:00:00
+26      Maitry  0:10:59
+26      Maneesh         0:00:00
+26      Manjunatha A    0:17:50
+26      Mithun S        0:00:00
+26      Mukesh  0:00:00
+26      Mukesh Rao      0:00:00
+26      Muskan Garg     0:00:00
+26      Nandani Gupta   0:17:30
+26      Nishtha Jain    0:00:00
+26      Nitin M 0:00:00
+26      Prabir Kumar Satapathy  0:00:00
+26      Prateek _iot    0:00:00
+26      Prerna Singh    0:10:18
+26      Rishav Dash     0:09:29
+26      Rohan   0:00:00
+26      Saif Khan       0:00:00
+26      Saikumarreddy N 0:00:00
+26      Samprit         0:00:00
+26      Sandipan Saha   0:00:00
+26      Sanjeev Kumar   0:20:40
+26      Sanjeevan       0:00:00
+26      Saurabh Shukla  0:03:31
+26      Shiva Srivastava        0:00:00
+26      Shivan K        0:30:35
+26      Shivan_S        0:00:00
+26      Shivananda Sonwane      0:22:14
+26      Shubham Sharma  0:16:24
+26      Sowmiya Sivakumar       0:00:00
+26      Spuri   0:00:00
+26      Sudhanshu Kumar 0:00:00
+26      Suraj S Bilgi   0:00:00
+26      Swati   0:17:39
+26      Tarun   0:15:04
+26      Uday Mishra     0:00:00
+26      Vasanth P       0:00:00
+26      Vivek   0:00:00
+26      Wasim   0:00:00
+26      Zeeshan         0:00:00
+27      Abhishek        0:00:00
+27      Aditya  0:00:00
+27      Aditya Shinde   0:15:03
+27      Aditya_iot      0:05:09
+27      Amersh  0:00:00
+27      Ameya Jain      0:00:15
+27      Anirudh         0:08:07
+27      Ankit Sharma    0:00:00
+27      Ankitjha        0:03:03
+27      Anurag Tiwari   0:05:16
+27      Aravind         0:10:22
+27      Ashad Nasim     0:01:29
+27      Ashish  0:00:00
+27      Ayushi Mishra   0:12:23
+27      Bharath         0:12:21
+27      Boktiar Ahmed Bappy     0:33:08
+27      Chaitra K Hiremath      0:00:00
+27      Deepranjan Gupta        0:25:48
+27      Dibyanshu       0:01:45
+27      Harikrishnan Shaji      0:05:59
+27      Hitesh Choudhary        0:00:00
+27      Hrisikesh Neogi 0:14:13
+27      Hyder Abbas     0:00:00
+27      Ineuron Intelligence    0:00:00
+27      Ishawant Kumar  0:14:11
+27      Jawala Prakash  0:07:57
+27      Jayant Kumar    0:14:00
+27      Jaydeep Dixit   0:18:10
+27      Khushboo Priya  0:23:55
+27      Madhulika G     0:14:33
+27      Mahak   0:02:52
+27      Mahesh Sarade   0:06:02
+27      Maitry  0:11:19
+27      Maneesh         0:02:58
+27      Manjunatha A    0:20:05
+27      Mithun S        0:03:29
+27      Mukesh  0:00:00
+27      Mukesh Rao      0:32:53
+27      Muskan Garg     0:00:00
+27      Nandani Gupta   0:16:42
+27      Nishtha Jain    0:11:52
+27      Nitin M 0:00:00
+27      Prabir Kumar Satapathy  0:05:14
+27      Prateek _iot    0:05:17
+27      Prerna Singh    0:13:41
+27      Rishav Dash     0:07:45
+27      Rohan   0:00:00
+27      Saif Khan       0:00:00
+27      Saikumarreddy N 0:00:00
+27      Samprit         0:00:14
+27      Sandipan Saha   0:00:00
+27      Sanjeev Kumar   0:15:02
+27      Sanjeevan       0:00:00
+27      Saurabh Shukla  0:02:37
+27      Shiva Srivastava        0:00:00
+27      Shivan K        0:19:18
+27      Shivan_S        0:02:37
+27      Shivananda Sonwane      0:20:53
+27      Shubham Sharma  0:19:38
+27      Sowmiya Sivakumar       0:00:00
+27      Spuri   0:00:00
+27      Sudhanshu Kumar 0:02:32
+27      Suraj S Bilgi   0:00:00
+27      Swati   0:14:43
+27      Tarun   0:00:00
+27      Uday Mishra     0:00:00
+27      Vasanth P       0:00:00
+27      Vivek   0:02:25
+27      Wasim   0:03:16
+27      Zeeshan         0:05:23
+28      Abhishek        0:00:00
+28      Aditya  0:00:00
+28      Aditya Shinde   0:22:38
+28      Aditya_iot      0:15:11
+28      Amersh  0:00:00
+28      Ameya Jain      0:08:03
+28      Anirudh         0:05:07
+28      Ankit Sharma    0:00:00
+28      Ankitjha        0:00:00
+28      Anurag Tiwari   0:00:00
+28      Aravind         0:14:25
+28      Ashad Nasim     0:00:00
+28      Ashish  0:00:00
+28      Ayushi Mishra   0:14:36
+28      Bharath         0:07:21
+28      Boktiar Ahmed Bappy     0:06:48
+28      Chaitra K Hiremath      0:00:00
+28      Deepranjan Gupta        0:16:32
+28      Dibyanshu       0:00:00
+28      Harikrishnan Shaji      0:12:42
+28      Hitesh Choudhary        0:00:12
+28      Hrisikesh Neogi 0:12:27
+28      Hyder Abbas     0:00:00
+28      Ineuron Intelligence    0:00:00
+28      Ishawant Kumar  0:13:14
+28      Jawala Prakash  0:14:34
+28      Jayant Kumar    0:01:36
+28      Jaydeep Dixit   0:19:11
+28      Khushboo Priya  0:15:54
+28      Madhulika G     0:16:27
+28      Mahak   0:00:00
+28      Mahesh Sarade   0:10:15
+28      Maitry  0:13:57
+28      Maneesh         0:00:00
+28      Manjunatha A    0:16:09
+28      Mithun S        0:05:47
+28      Mukesh  0:00:00
+28      Mukesh Rao      0:00:00
+28      Muskan Garg     0:00:00
+28      Nandani Gupta   0:17:01
+28      Nishtha Jain    0:10:58
+28      Nitin M 0:00:00
+28      Prabir Kumar Satapathy  0:08:20
+28      Prateek _iot    0:11:30
+28      Prerna Singh    0:23:25
+28      Rishav Dash     0:06:43
+28      Rohan   0:00:00
+28      Saif Khan       0:00:00
+28      Saikumarreddy N 0:08:26
+28      Samprit         0:00:00
+28      Sandipan Saha   0:11:16
+28      Sanjeev Kumar   0:19:27
+28      Sanjeevan       0:00:00
+28      Saurabh Shukla  0:00:57
+28      Shiva Srivastava        0:00:00
+28      Shivan K        0:11:47
+28      Shivan_S        0:00:00
+28      Shivananda Sonwane      0:19:30
+28      Shubham Sharma  0:16:59
+28      Sowmiya Sivakumar       0:00:00
+28      Spuri   0:00:00
+28      Sudhanshu Kumar 0:05:48
+28      Suraj S Bilgi   0:00:00
+28      Swati   0:17:11
+28      Tarun   0:00:00
+28      Uday Mishra     0:00:00
+28      Vasanth P       0:00:00
+28      Vivek   0:08:29
+28      Wasim   0:14:27
+28      Zeeshan         0:16:24
+29      Abhishek        0:00:00
+29      Aditya  0:00:00
+29      Aditya Shinde   0:00:00
+29      Aditya_iot      0:11:12
+29      Amersh  0:00:00
+29      Ameya Jain      0:08:17
+29      Anirudh         0:00:00
+29      Ankit Sharma    0:00:00
+29      Ankitjha        0:00:00
+29      Anurag Tiwari   0:00:00
+29      Aravind         0:13:27
+29      Ashad Nasim     0:00:00
+29      Ashish  0:00:00
+29      Ayushi Mishra   0:18:27
+29      Bharath         0:09:24
+29      Boktiar Ahmed Bappy     0:11:35
+29      Chaitra K Hiremath      0:00:42
+29      Deepranjan Gupta        0:22:00
+29      Dibyanshu       0:00:00
+29      Harikrishnan Shaji      0:17:50
+29      Hitesh Choudhary        0:00:00
+29      Hrisikesh Neogi 0:18:50
+29      Hyder Abbas     0:00:00
+29      Ineuron Intelligence    0:00:00
+29      Ishawant Kumar  0:17:59
+29      Jawala Prakash  0:14:58
+29      Jayant Kumar    0:00:00
+29      Jaydeep Dixit   0:21:22
+29      Khushboo Priya  0:12:35
+29      Madhulika G     0:12:33
+29      Mahak   0:00:00
+29      Mahesh Sarade   0:13:06
+29      Maitry  0:16:59
+29      Maneesh         0:00:00
+29      Manjunatha A    0:10:55
+29      Mithun S        0:07:36
+29      Mukesh  0:00:00
+29      Mukesh Rao      0:00:00
+29      Muskan Garg     0:00:00
+29      Nandani Gupta   0:18:31
+29      Nishtha Jain    0:08:36
+29      Nitin M 0:00:00
+29      Prabir Kumar Satapathy  0:07:39
+29      Prateek _iot    0:09:33
+29      Prerna Singh    0:14:43
+29      Rishav Dash     0:10:02
+29      Rohan   0:00:00
+29      Saif Khan       0:00:00
+29      Saikumarreddy N 0:09:33
+29      Samprit         0:00:00
+29      Sandipan Saha   0:00:00
+29      Sanjeev Kumar   0:13:58
+29      Sanjeevan       0:00:00
+29      Saurabh Shukla  0:00:00
+29      Shiva Srivastava        0:01:48
+29      Shivan K        0:13:26
+29      Shivan_S        0:00:00
+29      Shivananda Sonwane      0:20:30
+29      Shubham Sharma  0:15:23
+29      Sowmiya Sivakumar       0:11:14
+29      Spuri   0:00:00
+29      Sudhanshu Kumar 0:00:00
+29      Suraj S Bilgi   0:00:00
+29      Swati   0:07:49
+29      Tarun   0:00:00
+29      Uday Mishra     0:00:00
+29      Vasanth P       0:00:00
+29      Vivek   0:00:00
+29      Wasim   0:16:25
+29      Zeeshan         0:13:14
+30      Abhishek        0:00:00
+30      Aditya  0:00:00
+30      Aditya Shinde   0:00:00
+30      Aditya_iot      0:12:18
+30      Amersh  0:00:00
+30      Ameya Jain      0:07:59
+30      Anirudh         0:00:00
+30      Ankit Sharma    0:00:00
+30      Ankitjha        0:00:58
+30      Anurag Tiwari   0:00:00
+30      Aravind         0:00:00
+30      Ashad Nasim     0:00:00
+30      Ashish  0:00:00
+30      Ayushi Mishra   0:15:20
+30      Bharath         0:16:44
+30      Boktiar Ahmed Bappy     0:17:41
+30      Chaitra K Hiremath      0:06:35
+30      Deepranjan Gupta        0:19:08
+30      Dibyanshu       0:00:00
+30      Harikrishnan Shaji      0:13:54
+30      Hitesh Choudhary        0:00:00
+30      Hrisikesh Neogi 0:17:22
+30      Hyder Abbas     0:00:00
+30      Ineuron Intelligence    0:00:00
+30      Ishawant Kumar  0:19:05
+30      Jawala Prakash  0:15:47
+30      Jayant Kumar    0:00:00
+30      Jaydeep Dixit   0:15:01
+30      Khushboo Priya  0:13:20
+30      Madhulika G     0:20:24
+30      Mahak   0:00:00
+30      Mahesh Sarade   0:11:28
+30      Maitry  0:09:07
+30      Maneesh         0:00:00
+30      Manjunatha A    0:20:51
+30      Mithun S        0:09:12
+30      Mukesh  0:06:19
+30      Mukesh Rao      0:00:00
+30      Muskan Garg     0:09:36
+30      Nandani Gupta   0:21:05
+30      Nishtha Jain    0:09:50
+30      Nitin M 0:00:00
+30      Prabir Kumar Satapathy  0:04:56
+30      Prateek _iot    0:09:46
+30      Prerna Singh    0:16:58
+30      Rishav Dash     0:09:06
+30      Rohan   0:00:00
+30      Saif Khan       0:00:00
+30      Saikumarreddy N 0:10:07
+30      Samprit         0:00:00
+30      Sandipan Saha   0:00:00
+30      Sanjeev Kumar   0:19:05
+30      Sanjeevan       0:00:00
+30      Saurabh Shukla  0:00:00
+30      Shiva Srivastava        0:05:18
+30      Shivan K        0:12:03
+30      Shivan_S        0:00:00
+30      Shivananda Sonwane      0:23:33
+30      Shubham Sharma  0:18:02
+30      Sowmiya Sivakumar       0:16:39
+30      Spuri   0:00:00
+30      Sudhanshu Kumar 0:00:00
+30      Suraj S Bilgi   0:13:08
+30      Swati   0:06:11
+30      Tarun   0:00:00
+30      Uday Mishra     0:00:00
+30      Vasanth P       0:00:00
+30      Vivek   0:00:00
+30      Wasim   0:17:34
+30      Zeeshan         0:12:53
+Time taken: 27.734 seconds, Fetched: 350 row(s)
+
+
+
+
+with cte as 
+(select weekofyear(login_date) as week,agent,sum(duration) over (partition by weekofyear(login_date),agent) as total_duration_per_week, row_number() over(partition by weekofyear(login_date),agent) nth from agent_log_orc)
+select week,agent,from_unixtime(unix_timestamp(cast(cast (total_duration_per_week  as int)as string), 'ss'), 'H:mm:ss') as total_duration_per_week_per_agent
+from cte
+where nth=1;
+
+
+
