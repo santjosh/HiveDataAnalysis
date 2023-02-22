@@ -1900,6 +1900,8 @@ Time taken: 40.0 seconds, Fetched: 89 row(s)
 create table agent_perf_orc1(sl_num int,login_date date ,Agent String,total_chats int,avg_resp float,avg_resolution float,avg_rating float,total_feedback int)
 stored as orc;
 
+create table agent_perf_orc1(sl_num int,login_date date ,Agent String,total_chats int,avg_resp float,avg_resolution float,avg_rating float,total_feedback int)
+stored as orc;
 
 
 from agent_perf_csv insert overwrite table agent_perf_orc1 select sl_num,from_unixtime(unix_timestamp(login_date,'M/dd/yyyy'),'yyyy-MM-dd'),agent,total_chats, unix_timestamp(avg_resp,'H:mm:ss'),unix_timestamp(avg_resolution,'H:mm:ss'),avg_rating,total_feedback
@@ -1909,7 +1911,7 @@ from agent_perf_csv insert overwrite table agent_perf_orc1 select sl_num,from_un
 select from_unixtime(unix_timestamp(login_date,'M/dd/yyyy'),'yyyy-MM-dd'),agent, unix_timestamp(avg_resp,'H:mm:ss'),unix_timestamp(avg_resolution,'H:mm:ss')
 
 
-create table agent_log_orc(Agent String,login_date date,duration float) stored as orc;
+create table agent_log_orc(sl_num int, Agent String,login_date date,duration float) stored as orc;
 
 
 from agent_log_csv insert overwrite table agent_log_orc select agent,from_unixtime(unix_timestamp(login_date,'dd-MMM-yy'),'yyyy-MM-dd'),unix_timestamp(duration,'H:mm:ss');
@@ -3087,6 +3089,75 @@ with cte as
 select week,agent,from_unixtime(unix_timestamp(cast(cast (total_duration_per_week  as int)as string), 'ss'), 'H:mm:ss') as total_duration_per_week_per_agent
 from cte
 where nth=1;
+
+17. Perform partitioning on top of the agent column and then on top of that perform bucketing for each partitioning.
+
+create table part_buck_agent_login
+(
+sr_no int,
+Date_Data string,
+login_time string,
+logout_time string,
+duration string
+)
+partitioned by (agent string)
+clustered by (sr_no)
+into 2 buckets
+
+insert into table part_buck_agent_login
+partition(agent)
+select sl_num,login_date,login_time,logout_time,duration,agent from agent_log_csv
+
+hive> insert into table part_buck_agent_login
+    > partition(agent)
+    > select sl_num,login_date,login_time,logout_time,duration,agent from agent_log_csv;
+Query ID = abc_20230222202346_8cdc722f-01a3-44ef-944c-51831992365e
+Total jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks determined at compile time: 2
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1677077310174_0001, Tracking URL = http://e8d469bb0b24:8088/proxy/application_1677077310174_0001/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1677077310174_0001
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 2
+2023-02-22 20:23:59,177 Stage-1 map = 0%,  reduce = 0%
+2023-02-22 20:24:06,395 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 2.56 sec
+2023-02-22 20:24:23,826 Stage-1 map = 100%,  reduce = 50%, Cumulative CPU 7.66 sec
+2023-02-22 20:24:24,851 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 12.81 sec
+MapReduce Total cumulative CPU time: 13 seconds 380 msec
+Ended Job = job_1677077310174_0001
+Loading data to table hive_db.part_buck_agent_login partition (agent=null)
+
+
+         Time taken to load dynamic partitions: 3.906 seconds
+         Time taken for adding to write entity : 0.003 seconds
+Launching Job 2 out of 2
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1677077310174_0002, Tracking URL = http://e8d469bb0b24:8088/proxy/application_1677077310174_0002/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1677077310174_0002
+Hadoop job information for Stage-3: number of mappers: 1; number of reducers: 1
+2023-02-22 20:24:42,285 Stage-3 map = 0%,  reduce = 0%
+2023-02-22 20:24:49,444 Stage-3 map = 100%,  reduce = 0%, Cumulative CPU 1.83 sec
+2023-02-22 20:24:55,577 Stage-3 map = 100%,  reduce = 100%, Cumulative CPU 4.58 sec
+MapReduce Total cumulative CPU time: 4 seconds 580 msec
+Ended Job = job_1677077310174_0002
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 2   Cumulative CPU: 13.38 sec   HDFS Read: 79823 HDFS Write: 79216 SUCCESS
+Stage-Stage-3: Map: 1  Reduce: 1   Cumulative CPU: 4.58 sec   HDFS Read: 47149 HDFS Write: 103885 SUCCESS
+Total MapReduce CPU Time Spent: 17 seconds 960 msec
+OK
+Time taken: 74.188 seconds
+
 
 
 
